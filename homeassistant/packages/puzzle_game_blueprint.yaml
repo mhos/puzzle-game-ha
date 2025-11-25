@@ -1,0 +1,733 @@
+# Puzzle Game - Blueprint Ready Version
+# ============================================
+# Based on recommendations from dinki (View Assist creator)
+#
+# This version uses:
+# - Single consolidated automation with trigger IDs
+# - assist_satellite.ask_question for continuous conversation (no wake word spam)
+# - Script-based game loop for active play sessions
+# - Still supports pause/resume functionality
+#
+# SETUP:
+# 1. Replace YOUR_API_HOST:5000 with your server IP (e.g., 192.168.1.100:5000)
+# 2. Import this as a package
+# 3. Eventually convert to blueprint for easy distribution
+#
+
+# ===========================================
+# INPUT HELPERS
+# ===========================================
+input_text:
+  puzzle_game_id:
+    name: Current Puzzle Game ID
+    initial: ""
+    max: 100
+  puzzle_current_message:
+    name: Current Puzzle Message
+    initial: ""
+    max: 255
+  puzzle_last_satellite:
+    name: Puzzle Last Satellite Device
+    initial: ""
+    max: 255
+  puzzle_game_session_active:
+    name: Puzzle Game Session Active
+    initial: "false"
+    max: 10
+
+input_boolean:
+  puzzle_game_give_up_pending:
+    name: Puzzle Game Give Up Pending
+    initial: false
+
+timer:
+  puzzle_game_timeout:
+    name: Puzzle Game Timeout
+    duration: "00:10:00"
+    restore: false
+
+# ===========================================
+# REST COMMANDS
+# ===========================================
+rest_command:
+  puzzle_start_game:
+    url: "http://YOUR_API_HOST:5000/api/game/start"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"bonus": false}'
+    content_type: "application/json"
+
+  puzzle_start_bonus_game:
+    url: "http://YOUR_API_HOST:5000/api/game/start"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"bonus": true}'
+    content_type: "application/json"
+
+  puzzle_submit_answer:
+    url: "http://YOUR_API_HOST:5000/api/game/{{ game_id }}/answer"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"answer": "{{ answer }}"}'
+    content_type: "application/json"
+
+  puzzle_reveal_letter:
+    url: "http://YOUR_API_HOST:5000/api/game/{{ game_id }}/reveal"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: "{}"
+    content_type: "application/json"
+
+  puzzle_skip_word:
+    url: "http://YOUR_API_HOST:5000/api/game/{{ game_id }}/skip"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: "{}"
+    content_type: "application/json"
+
+  puzzle_repeat_clue:
+    url: "http://YOUR_API_HOST:5000/api/game/{{ game_id }}/repeat"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: "{}"
+    content_type: "application/json"
+
+  puzzle_give_up:
+    url: "http://YOUR_API_HOST:5000/api/game/{{ game_id }}/giveup"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: "{}"
+    content_type: "application/json"
+
+# ===========================================
+# REST SENSORS
+# ===========================================
+rest:
+  - resource: "http://YOUR_API_HOST:5000/api/game/latest"
+    scan_interval: 2
+    sensor:
+      - name: "Puzzle Latest Game"
+        value_template: "{{ value_json.game_id if value_json is defined and value_json.game_id is defined else 'none' }}"
+        availability: "{{ value_json is defined and value_json.game_id is defined }}"
+
+  - resource_template: >-
+      http://YOUR_API_HOST:5000/api/game/{{ states('input_text.puzzle_game_id') | default('none', true) }}
+    scan_interval: 1
+    sensor:
+      - name: "Puzzle Game State"
+        value_template: >-
+          {% if value_json is defined and value_json.clue is defined %}
+            {{ value_json.clue }}
+          {% elif value_json is defined and value_json.detail is defined %}
+            {{ value_json.detail }}
+          {% else %}
+            No game
+          {% endif %}
+        availability: "{{ value_json is defined and value_json.game_id is defined }}"
+        json_attributes:
+          - game_id
+          - phase
+          - word_number
+          - score
+          - reveals
+          - blanks
+          - clue
+          - solved_words
+          - solved_word_indices
+          - last_message
+          - is_active
+
+# ===========================================
+# SCRIPT - Active Game Loop
+# ===========================================
+script:
+  puzzle_game_active_session:
+    alias: "Puzzle Game - Active Play Session"
+    description: "Handles continuous conversation during active gameplay"
+    fields:
+      satellite_entity:
+        description: "The assist satellite entity ID"
+        example: "assist_satellite.my_device"
+    sequence:
+      # Mark session as active
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.puzzle_game_session_active
+        data:
+          value: "true"
+
+      # Game loop - continues until user exits or game ends
+      - repeat:
+          while:
+            - condition: template
+              value_template: "{{ states('input_text.puzzle_game_session_active') == 'true' }}"
+            - condition: template
+              value_template: "{{ states('input_text.puzzle_game_id') != '' }}"
+          sequence:
+            # Update game state
+            - service: homeassistant.update_entity
+              target:
+                entity_id: sensor.puzzle_game_state
+
+            # Check if game is still active
+            - condition: template
+              value_template: "{{ state_attr('sensor.puzzle_game_state', 'is_active') == true }}"
+
+            # Ask for user action
+            - action: assist_satellite.ask_question
+              data:
+                question: "What would you like to do? You can answer, reveal, skip, repeat, or pause."
+                entity_id: "{{ satellite_entity }}"
+                preannounce: false
+                answers:
+                  - id: answer
+                    sentences:
+                      - "{answer}"
+                      - "the answer is {answer}"
+                      - "is it {answer}"
+                  - id: reveal
+                    sentences:
+                      - "reveal"
+                      - "reveal a letter"
+                      - "show me a letter"
+                      - "hint"
+                  - id: skip
+                    sentences:
+                      - "skip"
+                      - "pass"
+                      - "next"
+                      - "skip word"
+                  - id: repeat
+                    sentences:
+                      - "repeat"
+                      - "say that again"
+                      - "what's the clue"
+                      - "repeat clue"
+                  - id: pause
+                    sentences:
+                      - "pause"
+                      - "stop"
+                      - "exit"
+                      - "I'll be back"
+                  - id: giveup
+                    sentences:
+                      - "give up"
+                      - "I give up"
+                      - "end game"
+              response_variable: player_action
+
+            # Handle the action using choose
+            - choose:
+                #############################################
+                # ANSWER
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'answer' }}"
+                  sequence:
+                    - service: rest_command.puzzle_submit_answer
+                      data:
+                        game_id: "{{ states('input_text.puzzle_game_id') }}"
+                        answer: "{{ player_action.slots.answer }}"
+                    - delay:
+                        seconds: 1
+                    - service: homeassistant.update_entity
+                      target:
+                        entity_id: sensor.puzzle_game_state
+                    - delay:
+                        seconds: 1
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ state_attr('sensor.puzzle_game_state', 'last_message').startswith('Correct') }}"
+                          sequence:
+                            - service: assist_satellite.announce
+                              target:
+                                entity_id: "{{ satellite_entity }}"
+                              data:
+                                message: "{{ state_attr('sensor.puzzle_game_state', 'last_message') }}"
+                                preannounce: false
+                      default:
+                        - service: media_player.play_media
+                          target:
+                            entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
+                          data:
+                            media_content_id: "http://YOUR_API_HOST:5000/static/wrong.mp3"
+                            media_content_type: "music"
+                        - delay:
+                            seconds: 1
+                        - service: assist_satellite.announce
+                          target:
+                            entity_id: "{{ satellite_entity }}"
+                          data:
+                            message: "{{ state_attr('sensor.puzzle_game_state', 'last_message') }}"
+                            preannounce: false
+
+                #############################################
+                # REVEAL
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'reveal' }}"
+                  sequence:
+                    - service: rest_command.puzzle_reveal_letter
+                      data:
+                        game_id: "{{ states('input_text.puzzle_game_id') }}"
+                    - delay:
+                        seconds: 1
+                    - service: homeassistant.update_entity
+                      target:
+                        entity_id: sensor.puzzle_game_state
+                    - delay:
+                        seconds: 1
+                    - service: assist_satellite.announce
+                      target:
+                        entity_id: "{{ satellite_entity }}"
+                      data:
+                        message: >
+                          {% if state_attr('sensor.puzzle_game_state', 'last_message').startswith('No reveals') %}
+                            {{ state_attr('sensor.puzzle_game_state', 'last_message') }}
+                          {% else %}
+                            {{ state_attr('sensor.puzzle_game_state', 'clue') }}
+                          {% endif %}
+                        preannounce: false
+
+                #############################################
+                # SKIP
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'skip' }}"
+                  sequence:
+                    - service: rest_command.puzzle_skip_word
+                      data:
+                        game_id: "{{ states('input_text.puzzle_game_id') }}"
+                    - delay:
+                        seconds: 1
+                    - service: homeassistant.update_entity
+                      target:
+                        entity_id: sensor.puzzle_game_state
+                    - delay:
+                        seconds: 1
+                    - service: assist_satellite.announce
+                      target:
+                        entity_id: "{{ satellite_entity }}"
+                      data:
+                        message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+                        preannounce: false
+
+                #############################################
+                # REPEAT
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'repeat' }}"
+                  sequence:
+                    - service: rest_command.puzzle_repeat_clue
+                      data:
+                        game_id: "{{ states('input_text.puzzle_game_id') }}"
+                    - delay:
+                        seconds: 1
+                    - service: homeassistant.update_entity
+                      target:
+                        entity_id: sensor.puzzle_game_state
+                    - delay:
+                        seconds: 1
+                    - service: assist_satellite.announce
+                      target:
+                        entity_id: "{{ satellite_entity }}"
+                      data:
+                        message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+                        preannounce: false
+
+                #############################################
+                # PAUSE/EXIT
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'pause' }}"
+                  sequence:
+                    - service: input_text.set_value
+                      target:
+                        entity_id: input_text.puzzle_game_session_active
+                      data:
+                        value: "false"
+                    - service: assist_satellite.announce
+                      target:
+                        entity_id: "{{ satellite_entity }}"
+                      data:
+                        message: "Game paused. Say 'continue puzzle game' to resume later."
+                        preannounce: false
+
+                #############################################
+                # GIVE UP
+                #############################################
+                - conditions:
+                    - condition: template
+                      value_template: "{{ player_action.id == 'giveup' }}"
+                  sequence:
+                    # Ask for confirmation
+                    - action: assist_satellite.ask_question
+                      data:
+                        question: "Are you sure you want to give up?"
+                        entity_id: "{{ satellite_entity }}"
+                        preannounce: false
+                        answers:
+                          - id: yes
+                            sentences:
+                              - "yes"
+                              - "yeah"
+                              - "yep"
+                              - "sure"
+                          - id: no
+                            sentences:
+                              - "no"
+                              - "nope"
+                              - "cancel"
+                              - "never mind"
+                      response_variable: confirm
+
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ confirm.id == 'yes' }}"
+                          sequence:
+                            - service: rest_command.puzzle_give_up
+                              data:
+                                game_id: "{{ states('input_text.puzzle_game_id') }}"
+                            - delay:
+                                seconds: 2
+                            - service: homeassistant.update_entity
+                              target:
+                                entity_id: sensor.puzzle_game_state
+                            - delay:
+                                milliseconds: 500
+                            - service: input_text.set_value
+                              target:
+                                entity_id: input_text.puzzle_game_id
+                              data:
+                                value: ""
+                            - service: input_text.set_value
+                              target:
+                                entity_id: input_text.puzzle_game_session_active
+                              data:
+                                value: "false"
+                            - service: assist_satellite.announce
+                              target:
+                                entity_id: "{{ satellite_entity }}"
+                              data:
+                                message: "{{ state_attr('sensor.puzzle_game_state', 'last_message') }}"
+                                preannounce: false
+                      default:
+                        - service: assist_satellite.announce
+                          target:
+                            entity_id: "{{ satellite_entity }}"
+                          data:
+                            message: "Continuing the game."
+                            preannounce: false
+
+      # Session ended - clean up
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.puzzle_game_session_active
+        data:
+          value: "false"
+
+# ===========================================
+# AUTOMATION - Main Game Controller
+# ===========================================
+automation:
+  - id: puzzle_game_controller
+    alias: "Puzzle Game - Main Controller"
+    description: "Consolidated automation for all puzzle game interactions"
+
+    trigger:
+      # Start daily game
+      - platform: conversation
+        command:
+          - "start puzzle game"
+          - "[start] [a] [new] puzzle [game]"
+        id: start
+
+      # Start bonus game
+      - platform: conversation
+        command:
+          - "play bonus game"
+          - "[start] [a] bonus [puzzle] [game]"
+          - "bonus round"
+        id: bonus
+
+      # Continue/resume game
+      - platform: conversation
+        command:
+          - "continue puzzle game"
+          - "resume puzzle game"
+          - "keep playing"
+        id: continue
+
+    action:
+      - variables:
+          view_assist_device: "{{ view_assist_entity(trigger.device_id) }}"
+
+      - choose:
+          #############################################
+          # START DAILY GAME
+          #############################################
+          - conditions:
+              - condition: trigger
+                id: start
+            sequence:
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.puzzle_last_satellite
+                data:
+                  value: "{{ view_assist_device }}"
+
+              # Call API to start game
+              - service: rest_command.puzzle_start_game
+              - delay:
+                  seconds: 2
+              - service: homeassistant.update_entity
+                target:
+                  entity_id: sensor.puzzle_latest_game
+              - delay:
+                  seconds: 1
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.puzzle_game_id
+                data:
+                  value: "{{ states('sensor.puzzle_latest_game') }}"
+              - delay:
+                  seconds: 1
+              - service: homeassistant.update_entity
+                target:
+                  entity_id: sensor.puzzle_game_state
+              - delay:
+                  seconds: 1
+
+              # Show dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  data:
+                    url: "http://YOUR_API_HOST:5000/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                    mode: hold
+                  title: "Puzzle Game"
+              - service: view_assist.navigate
+                data:
+                  device: "{{ view_assist_device }}"
+                  path: "/view-assist/webpage"
+                  revert_timeout: 0
+              - service: timer.start
+                target:
+                  entity_id: timer.puzzle_game_timeout
+                data:
+                  duration: "00:10:00"
+
+              # Announce first clue
+              - delay:
+                  seconds: 1
+              - service: assist_satellite.announce
+                target:
+                  entity_id: "{{ trigger.satellite_id }}"
+                data:
+                  message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+                  preannounce: false
+
+              # Start active game session script
+              - service: script.puzzle_game_active_session
+                data:
+                  satellite_entity: "{{ trigger.satellite_id }}"
+
+          #############################################
+          # START BONUS GAME
+          #############################################
+          - conditions:
+              - condition: trigger
+                id: bonus
+            sequence:
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.puzzle_last_satellite
+                data:
+                  value: "{{ view_assist_device }}"
+
+              # Call API to start bonus game
+              - service: rest_command.puzzle_start_bonus_game
+              - delay:
+                  seconds: 2
+              - service: homeassistant.update_entity
+                target:
+                  entity_id: sensor.puzzle_latest_game
+              - delay:
+                  seconds: 1
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.puzzle_game_id
+                data:
+                  value: "{{ states('sensor.puzzle_latest_game') }}"
+              - delay:
+                  seconds: 1
+              - service: homeassistant.update_entity
+                target:
+                  entity_id: sensor.puzzle_game_state
+              - delay:
+                  seconds: 1
+
+              # Show dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  data:
+                    url: "http://YOUR_API_HOST:5000/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                    mode: hold
+                  title: "Puzzle Game"
+              - service: view_assist.navigate
+                data:
+                  device: "{{ view_assist_device }}"
+                  path: "/view-assist/webpage"
+                  revert_timeout: 0
+              - service: timer.start
+                target:
+                  entity_id: timer.puzzle_game_timeout
+                data:
+                  duration: "00:10:00"
+
+              # Announce first clue
+              - delay:
+                  seconds: 1
+              - service: assist_satellite.announce
+                target:
+                  entity_id: "{{ trigger.satellite_id }}"
+                data:
+                  message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+                  preannounce: false
+
+              # Start active game session script
+              - service: script.puzzle_game_active_session
+                data:
+                  satellite_entity: "{{ trigger.satellite_id }}"
+
+          #############################################
+          # CONTINUE/RESUME GAME
+          #############################################
+          - conditions:
+              - condition: trigger
+                id: continue
+              - condition: template
+                value_template: "{{ states('input_text.puzzle_game_id') != '' }}"
+            sequence:
+              # Refresh game state
+              - service: homeassistant.update_entity
+                target:
+                  entity_id: sensor.puzzle_game_state
+              - delay:
+                  seconds: 1
+
+              # Check if game is still active
+              - condition: template
+                value_template: "{{ state_attr('sensor.puzzle_game_state', 'is_active') == true }}"
+
+              # Show dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  data:
+                    url: "http://YOUR_API_HOST:5000/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                    mode: hold
+                  title: "Puzzle Game"
+              - service: view_assist.navigate
+                data:
+                  device: "{{ view_assist_device }}"
+                  path: "/view-assist/webpage"
+                  revert_timeout: 0
+
+              # Announce current clue
+              - service: assist_satellite.announce
+                target:
+                  entity_id: "{{ trigger.satellite_id }}"
+                data:
+                  message: "Welcome back! {{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+                  preannounce: false
+
+              # Resume active game session script
+              - service: script.puzzle_game_active_session
+                data:
+                  satellite_entity: "{{ trigger.satellite_id }}"
+
+  # ===========================================
+  # STATE-TRIGGERED AUTOMATIONS
+  # ===========================================
+
+  # Hide Dashboard when game ends
+  - id: puzzle_game_hide_dashboard
+    alias: "Puzzle Game - Hide Dashboard"
+    description: "Navigate away from puzzle dashboard when game ends"
+    trigger:
+      - platform: state
+        entity_id: input_text.puzzle_game_id
+        to: ""
+      - platform: state
+        entity_id: sensor.puzzle_game_state
+        attribute: is_active
+        to: false
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.puzzle_game_timeout
+    condition:
+      - condition: template
+        value_template: "{{ states('input_text.puzzle_last_satellite') != '' and states('input_text.puzzle_last_satellite') != 'unknown' }}"
+    action:
+      - variables:
+          view_assist_device: "{{ states('input_text.puzzle_last_satellite') }}"
+      # Wait 60 seconds before hiding dashboard
+      - delay:
+          seconds: 60
+      - service: view_assist.set_state
+        target:
+          entity_id: "{{ view_assist_device }}"
+        data:
+          data:
+            mode: auto
+      - service: view_assist.navigate
+        data:
+          device: "{{ view_assist_device }}"
+          path: "/lovelace/0"
+      - service: timer.cancel
+        target:
+          entity_id: timer.puzzle_game_timeout
+    mode: single
+
+  # Reset timeout on any puzzle interaction
+  - id: puzzle_game_reset_timeout
+    alias: "Puzzle Game - Reset Timeout"
+    description: "Reset the 10 minute timeout whenever user interacts with game"
+    trigger:
+      - platform: state
+        entity_id: sensor.puzzle_game_state
+        attribute: last_message
+      - platform: state
+        entity_id: sensor.puzzle_game_state
+        attribute: clue
+    condition:
+      - condition: state
+        entity_id: timer.puzzle_game_timeout
+        state: active
+    action:
+      - service: timer.start
+        target:
+          entity_id: timer.puzzle_game_timeout
+        data:
+          duration: "00:10:00"
+    mode: single
