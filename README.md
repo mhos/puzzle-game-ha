@@ -1,8 +1,14 @@
 # Voice-Activated Puzzle Game for Home Assistant
 
-A voice-controlled word puzzle game that integrates with Home Assistant and [View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki). Solve themed word puzzles completely hands-free!
+A voice-controlled word puzzle game that integrates with Home Assistant, [View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki), and the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) by [msp1974](https://github.com/msp1974). Solve themed word puzzles completely hands-free!
 
-> **⚠️ IMPORTANT:** This game requires [View Assist](https://dinki.github.io/View-Assist/) to be installed and configured on your voice assistant device. View Assist adds visual feedback and extended functionality to Home Assistant voice assistants. It will NOT work with standard Home Assistant Assist without View Assist. The conversation triggers and visual dashboard are specifically designed for View Assist.
+> **⚠️ CRITICAL REQUIREMENTS:**
+>
+> This game requires BOTH of the following to be installed and working BEFORE you can play:
+> 1. **[View Assist](https://dinki.github.io/View-Assist/)** - Home Assistant integration
+> 2. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** - Application running on your display device
+>
+> You MUST have both installed and configured. This will NOT work with standard Home Assistant Assist alone.
 
 ## Features
 
@@ -33,50 +39,55 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ## Requirements
 
-### Hardware (REQUIRED)
+### Critical Requirements - MUST BE INSTALLED FIRST
 
-**You MUST have View Assist installed for this game to work!**
+Before installing this game, you **MUST** have both of these installed and working:
+
+1. **[View Assist](https://dinki.github.io/View-Assist/)** - Home Assistant integration by [dinki](https://github.com/dinki)
+2. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** - Device application by [msp1974](https://github.com/msp1974)
+
+**These are NOT optional. You need BOTH working together.**
+
+### Hardware
 
 - **Home Assistant server** (any platform)
-- **Voice assistant device with View Assist** - [View Assist](https://dinki.github.io/View-Assist/) supports many device types:
+- **Display device running View Assist Companion App** - Supports:
   - Android tablets
-  - Wyoming satellites
-  - ESPHome devices (ESP32-S3-BOX, M5Stack, etc.)
-  - PCs and phones
-  - Other devices that integrate with Home Assistant's voice system
-  - Must have [View Assist](https://dinki.github.io/View-Assist/) configured and working
-  - Standard Assist devices (without View Assist installed) will NOT work
+  - Android phones
+  - Other devices compatible with View Assist Companion App
 - **Server to run the FastAPI backend** (can be same as HA server, Raspberry Pi, Docker host, etc.)
 
 ### Software
 - **Home Assistant 2024.x or newer**
-- **[View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki)** - **Required!**
-- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) by [msp1974](https://github.com/msp1974)** - **Required for Android devices!**
-  - Runs on your Android device to enable the display and voice functionality
-  - Turns your Android device into a Home Assistant integrated smart display
+- **[View Assist](https://dinki.github.io/View-Assist/)** - REQUIRED
+- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** - REQUIRED
 - **Python 3.11+** (if running without Docker)
 - **Docker & Docker Compose** (recommended deployment method)
 - **Ollama** with llama3.2:3b model - **You must install and run this yourself!**
 
 ### What is View Assist?
 
-[View Assist](https://dinki.github.io/View-Assist/) (created by [dinki](https://github.com/dinki)) is a Home Assistant integration that adds visual feedback and extended functionality to voice assistants. For Android devices, it works with the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) (created by [msp1974](https://github.com/msp1974)) to turn your Android device into a smart display.
+View Assist is a two-part system that works together to create a smart voice-controlled display:
 
-**Together, these tools enable:**
-- Visual dashboards displayed on your voice assistant device
+1. **[View Assist](https://dinki.github.io/View-Assist/)** by [dinki](https://github.com/dinki) - The Home Assistant integration that provides the backend services and functionality
+2. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** by [msp1974](https://github.com/msp1974) - The application that runs on your display device (Android tablets/phones)
+
+**BOTH components are required and work together to provide:**
+- Visual dashboards displayed on your device's screen
 - Custom voice commands and automations
 - Wake word detection and voice control
 - Broadcasting messages across multiple devices
 - Integration with Home Assistant dashboards
 
-**This game uses View Assist to:**
-- Display the interactive game dashboard on your device's screen
+**This game requires BOTH components to:**
+- Display the interactive game dashboard on your device
 - Trigger game-specific voice commands
 - Show real-time game state, clues, and scores
 
-**Setup Instructions:**
-1. Install View Assist: [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
-2. For Android devices, install the Companion App: [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
+**YOU MUST INSTALL AND CONFIGURE BOTH BEFORE USING THIS GAME:**
+1. **First:** Install View Assist integration in Home Assistant - [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
+2. **Second:** Install the Companion App on your Android device - [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
+3. **Then:** Follow the setup guides to connect them together
 
 ## Quick Start
 

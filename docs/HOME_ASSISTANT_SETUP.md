@@ -4,28 +4,36 @@ This guide walks you through configuring Home Assistant to work with the Puzzle 
 
 ## Prerequisites
 
-**REQUIRED:**
-- **Home Assistant 2024.x or newer**
-- **[View Assist](https://dinki.github.io/View-Assist/) configured and working** - This is NOT optional! The game will not work without View Assist.
-- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** (for Android devices) - Required to run on your display device
-- **Puzzle Game API server** running and accessible from your Home Assistant instance
+**YOU MUST HAVE THESE INSTALLED AND WORKING BEFORE PROCEEDING:**
 
-### Why View Assist is Required
+1. **Home Assistant 2024.x or newer**
+2. **[View Assist](https://dinki.github.io/View-Assist/) integration** - REQUIRED, created by [dinki](https://github.com/dinki)
+3. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** - REQUIRED, created by [msp1974](https://github.com/msp1974), running on your display device
+4. **Puzzle Game API server** running and accessible from your Home Assistant instance
 
-[View Assist](https://dinki.github.io/View-Assist/) (created by [dinki](https://github.com/dinki)) adds visual feedback and extended functionality to Home Assistant voice assistants. For Android devices, it works with the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) (created by [msp1974](https://github.com/msp1974)).
+**BOTH View Assist components (the HA integration AND the device app) MUST be installed, configured, and working together.**
 
-This game requires View Assist because:
+### Why BOTH View Assist Components are Required
 
-- Uses the `view_assist.set_state` and `view_assist.navigate` services to show the game dashboard
+View Assist is a two-part system:
+- **View Assist integration** - Runs in Home Assistant, provides the services and backend
+- **View Assist Companion App** - Runs on your Android device, provides the display and interface
+
+**This game absolutely requires BOTH components because:**
+
+- Uses the `view_assist.set_state` and `view_assist.navigate` services (from the HA integration)
 - Uses the `view_assist_entity()` function to identify your display device
+- Requires the Companion App running on your device to show the dashboard
 - Leverages View Assist's conversation platform for game-specific voice commands
 - Displays real-time visual feedback on your voice assistant's screen
 
-Standard Home Assistant Assist devices (without View Assist installed) do not have these capabilities.
+Standard Home Assistant Assist (without View Assist) does NOT have these capabilities.
 
-**Setup Instructions:**
-1. Install View Assist: [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
-2. For Android devices, install the Companion App: [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
+**If you haven't installed View Assist yet, STOP HERE and install both components first:**
+1. **First:** Install View Assist integration in Home Assistant - [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
+2. **Second:** Install the Companion App on your Android device - [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
+3. **Third:** Configure them to work together following the View Assist setup guides
+4. **Finally:** Return here once View Assist is working
 
 ## Step 1: Enable Packages
 
