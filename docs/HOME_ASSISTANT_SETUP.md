@@ -6,17 +6,26 @@ This guide walks you through configuring Home Assistant to work with the Puzzle 
 
 **REQUIRED:**
 - **Home Assistant 2024.x or newer**
-- **View Assist device configured and working** - This is NOT optional! The game will not work without View Assist.
+- **[View Assist](https://dinki.github.io/View-Assist/) configured and working** - This is NOT optional! The game will not work without View Assist.
+- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** (for Android devices) - Required to run on your display device
 - **Puzzle Game API server** running and accessible from your Home Assistant instance
 
 ### Why View Assist is Required
 
-This game uses:
-- Conversation triggers that are specific to View Assist devices
-- The `view_assist.set_state` and `view_assist.navigate` services to show the dashboard
-- The `view_assist_entity()` function to identify your display device
+[View Assist](https://dinki.github.io/View-Assist/) (created by [dinki](https://github.com/dinki)) adds visual feedback and extended functionality to Home Assistant voice assistants. For Android devices, it works with the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) (created by [msp1974](https://github.com/msp1974)).
 
-Standard Home Assistant Assist Satellites (without View Assist) do not have these capabilities.
+This game requires View Assist because:
+
+- Uses the `view_assist.set_state` and `view_assist.navigate` services to show the game dashboard
+- Uses the `view_assist_entity()` function to identify your display device
+- Leverages View Assist's conversation platform for game-specific voice commands
+- Displays real-time visual feedback on your voice assistant's screen
+
+Standard Home Assistant Assist devices (without View Assist installed) do not have these capabilities.
+
+**Setup Instructions:**
+1. Install View Assist: [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
+2. For Android devices, install the Companion App: [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
 
 ## Step 1: Enable Packages
 

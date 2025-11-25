@@ -1,15 +1,15 @@
 # Voice-Activated Puzzle Game for Home Assistant
 
-A voice-controlled word puzzle game that integrates with Home Assistant and View Assist devices. Solve themed word puzzles completely hands-free!
+A voice-controlled word puzzle game that integrates with Home Assistant and [View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki). Solve themed word puzzles completely hands-free!
 
-> **⚠️ IMPORTANT:** This game requires a View Assist device (ESP32-based voice assistant with display). It will NOT work with standard Home Assistant Assist devices that don't have the View Assist integration. The conversation triggers and visual dashboard are specifically designed for View Assist.
+> **⚠️ IMPORTANT:** This game requires [View Assist](https://dinki.github.io/View-Assist/) to be installed and configured on your voice assistant device. View Assist adds visual feedback and extended functionality to Home Assistant voice assistants. It will NOT work with standard Home Assistant Assist without View Assist. The conversation triggers and visual dashboard are specifically designed for View Assist.
 
 ## Features
 
 - 🎮 **Daily Puzzles**: Fresh AI-generated puzzle every day
 - 🎁 **Unlimited Bonus Rounds**: Play as many bonus games as you want
-- 🗣️ **Voice Control**: Completely hands-free gameplay via Home Assistant Assist
-- 📺 **Visual Dashboard**: Real-time display on View Assist devices (ESP32)
+- 🗣️ **Voice Control**: Completely hands-free gameplay via Home Assistant voice assistants
+- 📺 **Visual Dashboard**: Real-time display powered by [View Assist](https://dinki.github.io/View-Assist/)
 - 💾 **Persistent State**: Resume games anytime within 24 hours
 - 🎯 **Smart Gameplay**: Skip words, reveal letters, and track your score
 - 🔊 **Audio Feedback**: Wrong answer buzzer and TTS announcements
@@ -35,29 +35,48 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ### Hardware (REQUIRED)
 
-**You MUST have a View Assist device for this game to work!**
+**You MUST have View Assist installed for this game to work!**
 
 - **Home Assistant server** (any platform)
-- **View Assist device** - ESP32-based voice assistant with display running the View Assist integration
-  - Examples: ESP32-S3-BOX, M5Stack devices with display
-  - Must have View Assist integration configured and working
-  - Standard Assist Satellites (without View Assist) will NOT work
+- **Voice assistant device with View Assist** - [View Assist](https://dinki.github.io/View-Assist/) supports many device types:
+  - Android tablets
+  - Wyoming satellites
+  - ESPHome devices (ESP32-S3-BOX, M5Stack, etc.)
+  - PCs and phones
+  - Other devices that integrate with Home Assistant's voice system
+  - Must have [View Assist](https://dinki.github.io/View-Assist/) configured and working
+  - Standard Assist devices (without View Assist installed) will NOT work
 - **Server to run the FastAPI backend** (can be same as HA server, Raspberry Pi, Docker host, etc.)
 
 ### Software
-- **Home Assistant 2024.x or newer** with View Assist integration
+- **Home Assistant 2024.x or newer**
+- **[View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki)** - **Required!**
+- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) by [msp1974](https://github.com/msp1974)** - **Required for Android devices!**
+  - Runs on your Android device to enable the display and voice functionality
+  - Turns your Android device into a Home Assistant integrated smart display
 - **Python 3.11+** (if running without Docker)
 - **Docker & Docker Compose** (recommended deployment method)
 - **Ollama** with llama3.2:3b model - **You must install and run this yourself!**
 
 ### What is View Assist?
 
-View Assist is a Home Assistant integration that adds visual capabilities to ESP32 voice assistants with displays. It allows the game to:
-- Show the interactive dashboard on your device's screen
-- Trigger specific automations from voice commands
-- Display game state, clues, and scores in real-time
+[View Assist](https://dinki.github.io/View-Assist/) (created by [dinki](https://github.com/dinki)) is a Home Assistant integration that adds visual feedback and extended functionality to voice assistants. For Android devices, it works with the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) (created by [msp1974](https://github.com/msp1974)) to turn your Android device into a smart display.
 
-If you don't have a View Assist device, you cannot play this game yet. Consider building one using an ESP32-S3-BOX or similar device with display capabilities.
+**Together, these tools enable:**
+- Visual dashboards displayed on your voice assistant device
+- Custom voice commands and automations
+- Wake word detection and voice control
+- Broadcasting messages across multiple devices
+- Integration with Home Assistant dashboards
+
+**This game uses View Assist to:**
+- Display the interactive game dashboard on your device's screen
+- Trigger game-specific voice commands
+- Show real-time game state, clues, and scores
+
+**Setup Instructions:**
+1. Install View Assist: [dinki.github.io/View-Assist](https://dinki.github.io/View-Assist/)
+2. For Android devices, install the Companion App: [github.com/msp1974/ViewAssist_Companion_App](https://github.com/msp1974/ViewAssist_Companion_App)
 
 ## Quick Start
 
@@ -283,5 +302,12 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 MIT License - See LICENSE file for details
 
 ## Credits
+
+This project would not be possible without:
+
+- **[View Assist](https://dinki.github.io/View-Assist/)** by **[dinki](https://github.com/dinki)** - For creating the amazing View Assist integration that makes visual voice assistants possible
+- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** by **[msp1974](https://github.com/msp1974)** - For the Android companion app that powers the display functionality
+- **[Ollama](https://ollama.ai/)** - For enabling local AI puzzle generation
+- **Home Assistant Community** - For building an incredible smart home platform
 
 Built for the Home Assistant community with love ❤️
