@@ -65,15 +65,22 @@ Make clues more challenging and require some thought."""
 
 {theme_instruction}
 
-BE CREATIVE! Think of ANY interesting theme - objects, places, activities, concepts, pop culture, history, science, etc.
+BE COMPLETELY CREATIVE AND RANDOM! Think of ANY interesting theme from the entire world:
+- Objects, places, activities, concepts, animals, plants, food, tools, buildings, vehicles
+- Pop culture, history, science, nature, sports, hobbies, occupations, emotions
+- Household items, technology, art, music, weather, geography, mythology
+- Literally ANYTHING that comes to mind - don't limit yourself!
+
+Each puzzle should be COMPLETELY DIFFERENT from any previous puzzles.
+Think of specific, tangible, interesting things that people would recognize.
 
 Create a puzzle with these components:
 
-1. A THEME (final answer): Choose any interesting noun or concept (4-15 letters, uppercase)
+1. A THEME (final answer): Choose ANY interesting noun or concept (4-15 letters, uppercase)
    - Can be single word: LIGHTHOUSE, TREEHOUSE, DETECTIVE, MICROSCOPE, SKATEBOARD
-   - Can be two words: FERRIS WHEEL, FIRE STATION, COMIC BOOK, SOLAR SYSTEM, CORAL REEF
-   - Be creative and diverse! Don't repeat common themes
-   - Think about interesting objects, places, activities, animals, phenomena, etc.
+   - Can be two words: FERRIS WHEEL, FIRE STATION, COMIC BOOK, CORAL REEF, PINBALL MACHINE
+   - Be creative and diverse! Think of something completely unique and different each time
+   - Can be from any topic, category, or domain imaginable
 
 2. FIVE CLUE WORDS (4-10 letters each, uppercase) that ALL strongly relate to your chosen theme
    - Must be clearly connected to the theme
@@ -90,21 +97,28 @@ Create a puzzle with these components:
    - For higher difficulty: Make clues require more thinking
 
 Format your response EXACTLY like this:
-THEME: SUBMARINE
-WORD1: OCEAN | Large body of salt water
-WORD2: PERISCOPE | Viewing device for looking above water
-WORD3: TORPEDO | Underwater explosive weapon
-WORD4: CAPTAIN | Person who commands the vessel
-WORD5: DEPTH | How far below the surface
+THEME: CAROUSEL
+WORD1: HORSES | Animals you ride in circles
+WORD2: POLES | Vertical metal bars to hold onto
+WORD3: ROTATE | Spin around in circles
+WORD4: MUSIC | Sound played from the organ
+WORD5: CARNIVAL | Event where you find this ride
 
 Now generate a completely unique and creative puzzle with a theme you've never used before:"""
 
         # Adjust temperature based on difficulty
         # Lower difficulty = lower temperature (more predictable/common themes)
         # Higher difficulty = higher temperature (more creative/unusual themes)
-        temperature = 0.7 + (difficulty * 0.05)  # Range: 0.75 (easy) to 1.2 (hard)
+        # Increased base temperature for more variety
+        temperature = 0.85 + (difficulty * 0.05)  # Range: 0.9 (easy) to 1.35 (hard)
 
         try:
+            import random
+            import time
+
+            # Use timestamp + random for unique seed each time
+            seed = int(time.time() * 1000) + random.randint(0, 100000)
+
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{self.url}/api/generate",
@@ -116,7 +130,8 @@ Now generate a completely unique and creative puzzle with a theme you've never u
                             "temperature": temperature,
                             "top_k": 50,
                             "top_p": 0.95,
-                            "num_predict": 500
+                            "num_predict": 500,
+                            "seed": seed  # Random seed for more variety
                         }
                     }
                 )

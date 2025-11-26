@@ -23,19 +23,39 @@ This is an experimental version of the puzzle game following recommendations fro
 
 **User says:** "Start puzzle game"
 
-**System:** Starts game, shows dashboard, announces first clue
+**System:**
+- Starts game, shows dashboard
+- Announces first clue
+- Says once: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
+- Then enters silent continuous listening (NO more prompts, NO wake word needed)
 
-**Then enters a loop where the system asks:** "What would you like to do?"
-
-**User can respond** (NO wake word needed):
+**User can say:**
 - "dog" or "the answer is dog" → Submits answer
+- **"spell"** → Enter spelling mode (say letters one by one, then "done")
 - "reveal" → Reveals a letter
 - "skip" → Skips current word
 - "repeat" → Repeats the clue
 - "pause" → Exits the loop, saves game state
 - "give up" → Ends the game (asks for confirmation)
 
-**After each action**, the system responds and asks again, maintaining the conversation flow.
+**After each action**, the system responds and continues listening.
+
+### Spelling Mode (Accent Helper)
+
+If the system doesn't understand your spoken answer due to accent or pronunciation:
+
+**User says:** "spell"
+
+**System:** "Spell the word letter by letter. Say done when finished."
+
+**User says letters one by one:** "D" → "O" → "G" → "done"
+
+**System:** Repeats each letter, then announces the complete word "DOG" and submits it
+
+This is perfect for:
+- Difficult-to-pronounce words
+- Accent recognition issues
+- Complex or unusual spellings
 
 ### Pause & Resume
 
@@ -90,6 +110,8 @@ Later, they can say "continue puzzle game" to resume where they left off and re-
 2. **Natural conversation flow** - More like talking to a person
 3. **Pause/resume** - Still supports the "come back later" feature
 4. **Easier troubleshooting** - One place to debug vs many
+5. **Echo feedback** - System repeats what you said before validating
+6. **Graceful timeout handling** - Can resume after timeout
 
 ## Next Steps
 
@@ -141,9 +163,32 @@ This is fine for single-installation use, but for pure HA-only distribution, you
 - Or accept that users need the backend API running
 
 ### ask_question Behavior
-- The assist popup/bar appears during `ask_question` prompts
-- This is a View Assist UI behavior
-- Could potentially be customized via View Assist settings
+
+**"How Can I Assist" Overlay Issue:**
+- During `ask_question` prompts, View Assist may show a "How can I assist" overlay
+- This overlay can block the puzzle dashboard, making it hard to see clues
+- **Workarounds:**
+  1. Configure View Assist Companion App to use minimal listening UI
+  2. Adjust View Assist settings to show just a listening bar instead of full popup
+  3. Memorize the clue before the overlay appears
+
+**Timeout Behavior:**
+- The `timeout` parameter for `ask_question` is **not supported** in Home Assistant
+- Timeout duration is hardcoded internally (exact value not documented)
+- The blueprint uses `continue_on_error: true` to gracefully handle timeouts
+- When timeout occurs, the game pauses and you can say "continue puzzle game" to resume
+- **Note**: There's a known HA bug (Issue #151589) where timeouts don't always handle gracefully
+
+**Other Improvements:**
+- **Spelling mode:** Say "spell" to enter letter-by-letter mode - perfect for accent/pronunciation issues
+- **Silent listening:** Instructions announced once at start, then continuous silent listening (no repetitive prompts)
+- **Concise responses:** Minimal talking - short, clear messages
+- **Helpful pause messages:** "Paused. Say continue puzzle game to resume."
+- **Timeout handling:** If you don't respond in time, announces pause and resume instructions
+- **Unrecognized input:** If the system doesn't understand, it says "Try again" instead of crashing
+- **Crash protection:** All announce calls use `continue_on_error: true` to prevent VACA crashes from breaking the game
+- **No infinite loops:** Player response is cleared before each question to prevent old answers from repeating
+- **Completely random puzzles:** No category constraints - AI generates truly unique themes every time
 
 ## Credits
 
