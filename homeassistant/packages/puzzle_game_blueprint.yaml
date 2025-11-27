@@ -744,6 +744,23 @@ automation:
                 data:
                   assist_prompt: kitt_bar
 
+              # Start background music
+              - variables:
+                  media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+              - service: media_player.play_media
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  media_content_type: music
+                  media_content_id: "http://YOUR_API_HOST:5000/static/startgame.mp3"
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.25
+
               # Announce first clue
               - delay:
                   seconds: 1
@@ -765,6 +782,70 @@ automation:
                 data:
                   message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
                   preannounce: false
+
+              # Fade out background music over 4 seconds
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.22
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.18
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.15
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.12
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.08
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.04
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.01
+              - delay:
+                  milliseconds: 500
+              - service: media_player.media_stop
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
 
               # Start active game session script
               - service: script.puzzle_game_active_session
@@ -833,6 +914,23 @@ automation:
                 data:
                   assist_prompt: kitt_bar
 
+              # Start background music
+              - variables:
+                  media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+              - service: media_player.play_media
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  media_content_type: music
+                  media_content_id: "http://YOUR_API_HOST:5000/static/startgame.mp3"
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.25
+
               # Announce first clue
               - delay:
                   seconds: 1
@@ -854,6 +952,70 @@ automation:
                 data:
                   message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
                   preannounce: false
+
+              # Fade out background music over 4 seconds
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.22
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.18
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.15
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.12
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.08
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.04
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.01
+              - delay:
+                  milliseconds: 500
+              - service: media_player.media_stop
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
 
               # Start active game session script
               - service: script.puzzle_game_active_session
@@ -945,6 +1107,23 @@ automation:
                 data:
                   assist_prompt: kitt_bar
 
+              # Start background music
+              - variables:
+                  media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+              - service: media_player.play_media
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  media_content_type: music
+                  media_content_id: "http://YOUR_API_HOST:5000/static/startgame.mp3"
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.25
+
               # Announce current clue
               - service: assist_satellite.announce
                 continue_on_error: true
@@ -964,6 +1143,70 @@ automation:
                 data:
                   message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
                   preannounce: false
+
+              # Fade out background music over 4 seconds
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.22
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.18
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.15
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.12
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.08
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.04
+              - delay:
+                  milliseconds: 500
+              - service: media_player.volume_set
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
+                data:
+                  volume_level: 0.01
+              - delay:
+                  milliseconds: 500
+              - service: media_player.media_stop
+                continue_on_error: true
+                target:
+                  entity_id: "{{ media_player_entity }}"
 
               # Resume active game session script
               - service: script.puzzle_game_active_session
