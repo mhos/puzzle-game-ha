@@ -737,6 +737,13 @@ automation:
                 data:
                   duration: "00:10:00"
 
+              # Set minimal assist prompt (KITT bar) to avoid blocking dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  assist_prompt: kitt_bar
+
               # Announce first clue
               - delay:
                   seconds: 1
@@ -818,6 +825,13 @@ automation:
                   entity_id: timer.puzzle_game_timeout
                 data:
                   duration: "00:10:00"
+
+              # Set minimal assist prompt (KITT bar) to avoid blocking dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  assist_prompt: kitt_bar
 
               # Announce first clue
               - delay:
@@ -924,6 +938,13 @@ automation:
                   path: "/view-assist/webpage"
                   revert_timeout: 0
 
+              # Set minimal assist prompt (KITT bar) to avoid blocking dashboard
+              - service: view_assist.set_state
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  assist_prompt: kitt_bar
+
               # Announce current clue
               - service: assist_satellite.announce
                 continue_on_error: true
@@ -978,6 +999,12 @@ automation:
       # Wait 60 seconds before hiding dashboard
       - delay:
           seconds: 60
+      # Reset assist prompt to default (restore normal View Assist behavior)
+      - service: view_assist.set_state
+        target:
+          entity_id: "{{ view_assist_device }}"
+        data:
+          assist_prompt: ""
       - service: view_assist.set_state
         target:
           entity_id: "{{ view_assist_device }}"
