@@ -20,30 +20,14 @@ async def _get_conversation_agents(hass: HomeAssistant) -> dict[str, str]:
     """Get available conversation agents."""
     agents = {"default": "Default Assistant"}
 
-    try:
-        # Try the new API first (HA 2024.x+)
-        from homeassistant.components.conversation import get_agent_manager
-        manager = get_agent_manager(hass)
-        for info in manager.async_get_agent_info():
-            agents[info.id] = info.name
-    except ImportError:
-        _LOGGER.debug("get_agent_manager not available")
-    except Exception as e:
-        _LOGGER.debug("Could not get conversation agents from manager: %s", e)
-
-    try:
-        # Also get conversation entities (covers more agents)
-        from homeassistant.components.conversation import DOMAIN as CONVERSATION_DOMAIN
-        from homeassistant.helpers import entity_registry as er
-
-        ent_reg = er.async_get(hass)
-        for entity in ent_reg.entities.values():
-            if entity.domain == "conversation" and entity.entity_id not in agents:
-                # Use the name or generate one from entity_id
-                name = entity.name or entity.original_name or entity.entity_id.replace("conversation.", "").replace("_", " ").title()
-                agents[entity.entity_id] = name
-    except Exception as e:
-        _LOGGER.debug("Could not get conversation entities: %s", e)
+    # Simple approach: get all states that start with conversation.
+    for state in hass.states.async_all("conversation"):
+        entity_id = state.entity_id
+        # Get friendly name from attributes, or generate from entity_id
+        friendly_name = state.attributes.get("friendly_name")
+        if not friendly_name:
+            friendly_name = entity_id.replace("conversation.", "").replace("_", " ").title()
+        agents[entity_id] = friendly_name
 
     return agents
 
