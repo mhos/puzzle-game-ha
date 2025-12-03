@@ -1,0 +1,245 @@
+###############################################################################
+# Puzzle Game Dashboard for View Assist
+#
+# Installation:
+# 1. Install card-mod from HACS (required for styling)
+# 2. Create a new dashboard called "puzzle-game"
+# 3. Switch to YAML mode and paste this content
+# 4. Or create individual cards in the UI
+#
+# View Assist will navigate to: /puzzle-game/0
+###############################################################################
+
+title: Puzzle Game
+views:
+  - title: Puzzle Game
+    path: game
+    type: custom:vertical-layout
+    layout:
+      max_cols: 1
+    cards:
+      # Main container with gradient background
+      - type: custom:mod-card
+        card_mod:
+          style: |
+            ha-card {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              min-height: 100vh;
+              padding: 20px;
+              border-radius: 0;
+            }
+        card:
+          type: vertical-stack
+          cards:
+            # Header
+            - type: markdown
+              content: |
+                # Puzzle Game
+                {% set game = states.sensor.puzzle_game %}
+                {% if game.attributes.game_id %}
+                <span style="opacity: 0.7; font-family: monospace; font-size: 0.8em;">Game: {{ game.attributes.game_id[:8] }}...</span>
+                {% else %}
+                <span style="opacity: 0.7;">No active game</span>
+                {% endif %}
+              card_mod:
+                style: |
+                  ha-card {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    color: white;
+                    text-align: center;
+                  }
+                  ha-markdown {
+                    padding: 0 !important;
+                  }
+                  h1 {
+                    font-size: 2.5em !important;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    margin-bottom: 5px !important;
+                  }
+
+            # Stats Row
+            - type: horizontal-stack
+              cards:
+                - type: markdown
+                  content: |
+                    <div style="text-align: center;">
+                      <div style="font-size: 0.9em; opacity: 0.8;">Score</div>
+                      <div style="font-size: 2em; font-weight: bold;">{{ state_attr('sensor.puzzle_game', 'score') | default(0) }}</div>
+                    </div>
+                  card_mod:
+                    style: |
+                      ha-card {
+                        background: rgba(255, 255, 255, 0.2) !important;
+                        box-shadow: none !important;
+                        color: white;
+                        border-radius: 15px;
+                        padding: 10px;
+                      }
+                - type: markdown
+                  content: |
+                    <div style="text-align: center;">
+                      <div style="font-size: 0.9em; opacity: 0.8;">Reveals</div>
+                      <div style="font-size: 2em; font-weight: bold;">{{ state_attr('sensor.puzzle_game', 'reveals') | default(0) }}</div>
+                    </div>
+                  card_mod:
+                    style: |
+                      ha-card {
+                        background: rgba(255, 255, 255, 0.2) !important;
+                        box-shadow: none !important;
+                        color: white;
+                        border-radius: 15px;
+                        padding: 10px;
+                      }
+
+            # Feedback Message (conditional)
+            - type: conditional
+              conditions:
+                - condition: template
+                  value_template: "{{ state_attr('sensor.puzzle_game', 'last_message') not in [None, ''] }}"
+              card:
+                type: markdown
+                content: |
+                  {% set msg = state_attr('sensor.puzzle_game', 'last_message') | default('') %}
+                  {{ msg }}
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set msg = state_attr('sensor.puzzle_game', 'last_message') | default('') %}
+                      {% if msg.startswith('Correct') %}
+                      background: rgba(76, 175, 80, 0.85) !important;
+                      border: 2px solid rgba(76, 175, 80, 1);
+                      {% else %}
+                      background: rgba(244, 67, 54, 0.85) !important;
+                      border: 2px solid rgba(244, 67, 54, 1);
+                      {% endif %}
+                      box-shadow: none !important;
+                      color: white;
+                      text-align: center;
+                      border-radius: 15px;
+                      padding: 15px;
+                      font-weight: bold;
+                      font-size: 1.2em;
+                      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                    }
+
+            # Solved Words Section (conditional - show in phase 2)
+            - type: conditional
+              conditions:
+                - condition: template
+                  value_template: "{{ state_attr('sensor.puzzle_game', 'phase') == 2 }}"
+              card:
+                type: markdown
+                content: |
+                  <div style="color: #ffd700; font-weight: bold; margin-bottom: 10px;">Your Clue Words:</div>
+                  {% set words = state_attr('sensor.puzzle_game', 'solved_words') | default([]) %}
+                  <div style="font-size: 1.3em; font-weight: bold; letter-spacing: 1px;">
+                  {{ words | join(' • ') }}
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: rgba(255, 215, 0, 0.2) !important;
+                      border: 2px solid rgba(255, 215, 0, 0.5);
+                      box-shadow: none !important;
+                      color: white;
+                      text-align: center;
+                      border-radius: 15px;
+                      padding: 15px;
+                    }
+
+            # Word Display Section
+            - type: markdown
+              content: |
+                {% set game = states.sensor.puzzle_game %}
+                {% set phase = game.attributes.phase | default(1) %}
+                {% set word_num = game.attributes.word_number | default(1) %}
+                {% set is_active = game.attributes.is_active | default(false) %}
+                {% set blanks = game.attributes.blanks | default('_ _ _ _ _') %}
+                {% set clue = game.attributes.clue | default('Use your voice assistant to start playing!') %}
+                {% set theme = game.attributes.theme_revealed | default('') %}
+                {% set score = game.attributes.score | default(0) %}
+
+                <div style="text-align: center;">
+                  {% if phase == 2 %}
+                  <div style="color: #ffd700; font-weight: bold; font-size: 1.2em; margin-bottom: 10px;">FINAL ANSWER</div>
+                  {% elif is_active %}
+                  <div style="opacity: 0.9; font-size: 1.1em; margin-bottom: 10px;">Word {{ word_num }} of 6</div>
+                  {% elif theme %}
+                  <div style="opacity: 0.9; font-size: 1.1em; margin-bottom: 10px;">Game Complete!</div>
+                  {% else %}
+                  <div style="opacity: 0.9; font-size: 1.1em; margin-bottom: 10px;">Say "Start puzzle game"</div>
+                  {% endif %}
+
+                  <div style="font-family: 'Courier New', monospace; font-size: 1.8em; font-weight: bold; letter-spacing: 0.15em; margin: 15px 0;">
+                  {% if theme and not is_active %}{{ theme }}{% else %}{{ blanks }}{% endif %}
+                  </div>
+
+                  <div style="font-style: italic; opacity: 0.9; font-size: 1.1em;">
+                  {% if theme and not is_active %}Score: {{ score }}/70{% else %}{{ clue }}{% endif %}
+                  </div>
+                </div>
+              card_mod:
+                style: |
+                  ha-card {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    box-shadow: none !important;
+                    color: white;
+                    border-radius: 20px;
+                    padding: 25px 15px;
+                  }
+
+            # Progress Dots
+            - type: markdown
+              content: |
+                {% set game = states.sensor.puzzle_game %}
+                {% set solved = game.attributes.solved_word_indices | default([]) %}
+                {% set current = game.attributes.word_number | default(1) %}
+                {% set phase = game.attributes.phase | default(1) %}
+
+                <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                  {% for i in range(5) %}
+                    {% if i in solved %}
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #4caf50; display: flex; align-items: center; justify-content: center; font-size: 1.3em; font-weight: bold;">✓</div>
+                    {% elif i == current - 1 and phase == 1 %}
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-size: 1.3em; animation: pulse 2s infinite;">{{ i + 1 }}</div>
+                    {% else %}
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3em;">{{ i + 1 }}</div>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if phase == 2 %}
+                  <div style="width: 40px; height: 40px; border-radius: 50%; background: #ffd700; display: flex; align-items: center; justify-content: center; font-size: 1.2em; font-weight: bold; animation: pulse 2s infinite;">★</div>
+                  {% else %}
+                  <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2em;">★</div>
+                  {% endif %}
+                </div>
+
+                <style>
+                  @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                  }
+                </style>
+              card_mod:
+                style: |
+                  ha-card {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    color: white;
+                    margin-top: 15px;
+                  }
+
+            # Footer
+            - type: markdown
+              content: |
+                <div style="text-align: center; opacity: 0.6; font-size: 0.85em; margin-top: 15px;">
+                  Powered by Home Assistant
+                </div>
+              card_mod:
+                style: |
+                  ha-card {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    color: white;
+                  }

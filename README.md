@@ -27,7 +27,7 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ---
 
-## Installation (3 Easy Steps!)
+## Installation (4 Easy Steps!)
 
 ### Prerequisites
 
@@ -70,6 +70,23 @@ Click the button above (opens in new tab), or manually:
 3. Paste: `https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml`
 4. Click **Preview** then **Import**
 5. Click **Create Automation** from the blueprint
+
+### Step 4: Set Up the Dashboard
+
+The game requires a Lovelace dashboard for View Assist to display. You'll need [card-mod](https://github.com/thomasloven/lovelace-card-mod) from HACS for the styling.
+
+1. Install **card-mod** from HACS (Frontend)
+2. Create a new dashboard:
+   - Go to **Settings > Dashboards**
+   - Click **Add Dashboard**
+   - Name: `Puzzle Game`, Icon: `mdi:puzzle`
+   - URL: `puzzle-game`
+3. Open the new dashboard and click the three dots > **Edit Dashboard**
+4. Click three dots > **Raw configuration editor**
+5. Copy the contents from `www/community/puzzle_game/puzzle-game-dashboard.yaml`
+6. Save and exit edit mode
+
+View Assist will navigate to `/puzzle-game/game` to display the game.
 
 **That's it! You're ready to play!**
 
@@ -159,9 +176,10 @@ If AI fails, the game uses built-in fallback puzzles.
 - Fallback puzzles will be used if AI fails
 
 ### Dashboard Not Loading
-- Files should auto-copy to `config/www/community/puzzle_game/`
-- Access at `/local/community/puzzle_game/dashboard.html`
-- Check browser console for errors
+- Ensure card-mod is installed from HACS
+- Verify the dashboard URL is `puzzle-game`
+- Check that View Assist navigates to `/puzzle-game/game`
+- Dashboard YAML is in `config/www/community/puzzle_game/puzzle-game-dashboard.yaml`
 
 ### Voice Commands Not Working
 - Verify the blueprint automation is enabled
