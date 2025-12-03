@@ -10,7 +10,6 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
-from homeassistant.components.conversation import async_get_agent_info
 
 from .const import DOMAIN, CONF_CONVERSATION_AGENT
 
@@ -21,15 +20,30 @@ async def _get_conversation_agents(hass: HomeAssistant) -> dict[str, str]:
     """Get available conversation agents."""
     agents = {"default": "Default Assistant"}
 
-    # Try to get list of conversation agents
     try:
-        # Get all conversation agents from the conversation component
-        agent_info = await async_get_agent_info(hass)
-        if agent_info:
-            for agent in agent_info:
-                agents[agent.id] = agent.name
+        # Try the new API first (HA 2024.x+)
+        from homeassistant.components.conversation import get_agent_manager
+        manager = get_agent_manager(hass)
+        for info in manager.async_get_agent_info():
+            agents[info.id] = info.name
+    except ImportError:
+        _LOGGER.debug("get_agent_manager not available")
     except Exception as e:
-        _LOGGER.debug("Could not get conversation agents: %s", e)
+        _LOGGER.debug("Could not get conversation agents from manager: %s", e)
+
+    try:
+        # Also get conversation entities (covers more agents)
+        from homeassistant.components.conversation import DOMAIN as CONVERSATION_DOMAIN
+        from homeassistant.helpers import entity_registry as er
+
+        ent_reg = er.async_get(hass)
+        for entity in ent_reg.entities.values():
+            if entity.domain == "conversation" and entity.entity_id not in agents:
+                # Use the name or generate one from entity_id
+                name = entity.name or entity.original_name or entity.entity_id.replace("conversation.", "").replace("_", " ").title()
+                agents[entity.entity_id] = name
+    except Exception as e:
+        _LOGGER.debug("Could not get conversation entities: %s", e)
 
     return agents
 
