@@ -183,6 +183,7 @@ If AI fails, the game uses built-in fallback puzzles.
 - **[View Assist](https://dinki.github.io/View-Assist/)** by **[dinki](https://github.com/dinki)**
 - **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** by **[msp1974](https://github.com/msp1974)**
 - **Home Assistant Community**
+- Icon: [Twemoji](https://github.com/twitter/twemoji) by Twitter (CC BY 4.0)
 
 ## License
 
