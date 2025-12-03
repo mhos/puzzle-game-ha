@@ -37,9 +37,9 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ### Step 1: Install via HACS
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration" target="_blank"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store." /></a>
 
-Click the button above, or manually:
+Click the button above (opens in new tab), or manually:
 
 1. Open HACS in Home Assistant
 2. Click the three dots menu > **Custom repositories**
@@ -61,9 +61,9 @@ Click the button above, or manually:
 
 ### Step 3: Import the Blueprint
 
-[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fmhos%2Fpuzzle-game-ha%2Fblob%2Fmain%2Fhomeassistant%2Fblueprints%2Fautomation%2Fpuzzle_game_controller.yaml)
+<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fmhos%2Fpuzzle-game-ha%2Fblob%2Fmain%2Fhomeassistant%2Fblueprints%2Fautomation%2Fpuzzle_game_controller.yaml" target="_blank"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled." /></a>
 
-Click the button above, or manually:
+Click the button above (opens in new tab), or manually:
 
 1. Go to **Settings > Automations & Scenes > Blueprints**
 2. Click **Import Blueprint**
