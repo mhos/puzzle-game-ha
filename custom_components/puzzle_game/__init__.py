@@ -89,19 +89,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def _async_setup_frontend(hass: HomeAssistant) -> None:
-    """Copy frontend files to www directory."""
+    """Copy frontend files to www directory and clean up old files."""
     # Source: custom_components/puzzle_game/www/
     source_dir = Path(__file__).parent / "www"
 
     # Destination: config/www/community/puzzle_game/
     dest_dir = Path(hass.config.path("www")) / "community" / "puzzle_game"
 
-    def copy_files():
-        """Copy files (runs in executor)."""
+    # Files that should no longer exist (old/deprecated files)
+    deprecated_files = [
+        "dashboard.html",
+        "wrong.mp3",
+        "startup.mp3",
+    ]
+
+    def copy_and_cleanup():
+        """Copy files and remove deprecated ones (runs in executor)."""
         # Create destination directory
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        # Copy each file
+        # Remove deprecated files
+        for old_file in deprecated_files:
+            old_path = dest_dir / old_file
+            if old_path.exists():
+                old_path.unlink()
+                _LOGGER.info("Removed deprecated file: %s", old_file)
+
+        # Get list of current source files
+        source_files = {f.name for f in source_dir.iterdir() if f.is_file()}
+
+        # Remove any files in dest that are not in source (cleanup orphans)
+        if dest_dir.exists():
+            for dest_file in dest_dir.iterdir():
+                if dest_file.is_file() and dest_file.name not in source_files:
+                    dest_file.unlink()
+                    _LOGGER.info("Removed orphaned file: %s", dest_file.name)
+
+        # Copy each file from source
         for source_file in source_dir.iterdir():
             if source_file.is_file():
                 dest_file = dest_dir / source_file.name
@@ -111,7 +135,7 @@ async def _async_setup_frontend(hass: HomeAssistant) -> None:
                     _LOGGER.debug("Copied %s to %s", source_file.name, dest_file)
 
     try:
-        await hass.async_add_executor_job(copy_files)
+        await hass.async_add_executor_job(copy_and_cleanup)
         _LOGGER.info("Puzzle Game frontend files installed to %s", dest_dir)
     except Exception as err:
         _LOGGER.warning("Could not copy frontend files: %s", err)
