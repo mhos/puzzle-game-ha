@@ -37,3 +37,14 @@ repeat_clue:
 give_up:
   name: Give Up
   description: End the game and reveal all answers.
+
+set_session:
+  name: Set Session
+  description: Set the voice session active state. Used by the blueprint to track game loop.
+  fields:
+    active:
+      name: Active
+      description: Whether the voice session is active.
+      required: true
+      selector:
+        boolean:

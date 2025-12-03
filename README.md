@@ -27,13 +27,13 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ---
 
-## Installation
+## Installation (3 Easy Steps!)
 
 ### Prerequisites
 
 - **Home Assistant 2024.1.0 or newer**
 - **A conversation agent configured** (OpenAI, Google AI, Ollama, or any HA-compatible AI)
-- **View Assist** (optional, for visual dashboard)
+- **View Assist** (for visual dashboard and voice control)
 
 ### Step 1: Install via HACS
 
@@ -57,36 +57,21 @@ Click the button above, or manually:
 4. Select which AI conversation agent to use for puzzle generation
 5. Click **Submit**
 
-### Step 3: Copy Static Files
+> **Note:** The dashboard files are automatically copied to your `www` folder!
 
-Copy the dashboard and sound files to your `www` folder:
+### Step 3: Import the Blueprint
 
-```bash
-# From the integration folder
-cp -r custom_components/puzzle_game/www/* /config/www/puzzle_game/
-```
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fmhos%2Fpuzzle-game-ha%2Fblob%2Fmain%2Fhomeassistant%2Fblueprints%2Fautomation%2Fpuzzle_game_controller.yaml)
 
-Or create the folder and copy manually:
-- Create folder: `config/www/puzzle_game/`
-- Copy: `dashboard.html`, `wrong.mp3`
-
-### Step 4: Install the Package (for voice control)
-
-1. Copy `homeassistant/packages/puzzle_game.yaml` to your `config/packages/` folder
-2. Add to `configuration.yaml` if not already present:
-   ```yaml
-   homeassistant:
-     packages: !include_dir_named packages
-   ```
-3. Restart Home Assistant
-
-### Step 5: Import the Blueprint
+Click the button above, or manually:
 
 1. Go to **Settings > Automations & Scenes > Blueprints**
 2. Click **Import Blueprint**
 3. Paste: `https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml`
 4. Click **Preview** then **Import**
 5. Click **Create Automation** from the blueprint
+
+**That's it! You're ready to play!**
 
 ---
 
@@ -146,37 +131,6 @@ The integration provides these services:
 
 ---
 
-## Project Structure
-
-```
-puzzle-game-ha/
-├── custom_components/
-│   └── puzzle_game/
-│       ├── __init__.py           # Integration setup
-│       ├── manifest.json         # Integration metadata
-│       ├── const.py              # Constants
-│       ├── config_flow.py        # UI configuration
-│       ├── coordinator.py        # State coordinator
-│       ├── game_manager.py       # Game logic
-│       ├── ai_client.py          # AI puzzle generation
-│       ├── storage.py            # Persistent storage
-│       ├── sensor.py             # Game state sensor
-│       ├── services.yaml         # Service definitions
-│       └── www/
-│           ├── dashboard.html    # Game dashboard
-│           └── wrong.mp3         # Sound effect
-├── homeassistant/
-│   ├── packages/
-│   │   └── puzzle_game.yaml      # Voice control script
-│   └── blueprints/
-│       └── automation/
-│           └── puzzle_game_controller.yaml
-├── hacs.json                     # HACS configuration
-└── README.md
-```
-
----
-
 ## Configuration
 
 ### Conversation Agent
@@ -205,13 +159,12 @@ If AI fails, the game uses built-in fallback puzzles.
 - Fallback puzzles will be used if AI fails
 
 ### Dashboard Not Loading
-- Ensure files are in `config/www/puzzle_game/`
+- Files should auto-copy to `config/www/puzzle_game/`
 - Access at `/local/puzzle_game/dashboard.html`
 - Check browser console for errors
 
 ### Voice Commands Not Working
 - Verify the blueprint automation is enabled
-- Check that `script.puzzle_game_active_session` exists
 - Ensure View Assist is properly configured
 
 ---
@@ -219,10 +172,9 @@ If AI fails, the game uses built-in fallback puzzles.
 ## Manual Installation (Without HACS)
 
 1. Copy `custom_components/puzzle_game` to your `config/custom_components/` folder
-2. Copy `www/puzzle_game` files to `config/www/puzzle_game/`
-3. Copy `homeassistant/packages/puzzle_game.yaml` to `config/packages/`
-4. Restart Home Assistant
-5. Add integration via Settings > Devices & Services
+2. Restart Home Assistant
+3. Add integration via Settings > Devices & Services (files will auto-copy)
+4. Import the blueprint
 
 ---
 

@@ -30,6 +30,7 @@ class PuzzleGameCoordinator:
         self.game_manager = GameManager(storage)
         self.conversation_agent = conversation_agent
         self._sensor = None
+        self._session_active = False
 
     def register_sensor(self, sensor) -> None:
         """Register the sensor entity."""
@@ -41,26 +42,49 @@ class PuzzleGameCoordinator:
         if self._sensor:
             self._sensor.update_state(state_data)
 
+    @property
+    def session_active(self) -> bool:
+        """Return whether a voice session is currently active."""
+        return self._session_active
+
+    def set_session_active(self, active: bool) -> None:
+        """Set the voice session active state."""
+        self._session_active = active
+        # Trigger a sensor update
+        game = self.storage.get_current_game()
+        if game:
+            state_data = self.game_manager.get_game_state_dict(game)
+        else:
+            state_data = self._get_empty_state()
+        state_data["session_active"] = self._session_active
+        self._update_sensor(state_data)
+
+    def _get_empty_state(self) -> dict[str, Any]:
+        """Return empty game state."""
+        return {
+            "game_id": None,
+            "phase": None,
+            "word_number": None,
+            "score": 0,
+            "reveals": 0,
+            "blanks": "",
+            "clue": "",
+            "solved_words": [],
+            "solved_word_indices": [],
+            "is_active": False,
+            "last_message": None,
+            "theme_revealed": None,
+            "session_active": self._session_active,
+        }
+
     async def async_refresh_state(self) -> None:
         """Refresh state from storage and update sensor."""
         game = self.storage.get_current_game()
         if game:
             state_data = self.game_manager.get_game_state_dict(game)
         else:
-            state_data = {
-                "game_id": None,
-                "phase": None,
-                "word_number": None,
-                "score": 0,
-                "reveals": 0,
-                "blanks": "",
-                "clue": "",
-                "solved_words": [],
-                "solved_word_indices": [],
-                "is_active": False,
-                "last_message": None,
-                "theme_revealed": None,
-            }
+            state_data = self._get_empty_state()
+        state_data["session_active"] = self._session_active
         self._update_sensor(state_data)
 
     async def start_game(self, bonus: bool = False) -> dict[str, Any]:

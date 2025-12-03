@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import shutil
+from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
@@ -20,6 +22,7 @@ from .const import (
     SERVICE_SKIP_WORD,
     SERVICE_REPEAT_CLUE,
     SERVICE_GIVE_UP,
+    SERVICE_SET_SESSION,
 )
 from .storage import PuzzleGameStorage
 from .coordinator import PuzzleGameCoordinator
@@ -41,10 +44,19 @@ SERVICE_SUBMIT_ANSWER_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_SET_SESSION_SCHEMA = vol.Schema(
+    {
+        vol.Required("active"): cv.boolean,
+    }
+)
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Puzzle Game from a config entry."""
     hass.data.setdefault(DOMAIN, {})
+
+    # Auto-copy www files to config/www/puzzle_game/
+    await _async_setup_frontend(hass)
 
     # Initialize storage
     storage = PuzzleGameStorage(hass)
@@ -76,6 +88,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+async def _async_setup_frontend(hass: HomeAssistant) -> None:
+    """Copy frontend files to www directory."""
+    # Source: custom_components/puzzle_game/www/
+    source_dir = Path(__file__).parent / "www"
+
+    # Destination: config/www/puzzle_game/
+    dest_dir = Path(hass.config.path("www")) / "puzzle_game"
+
+    def copy_files():
+        """Copy files (runs in executor)."""
+        # Create destination directory
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy each file
+        for source_file in source_dir.iterdir():
+            if source_file.is_file():
+                dest_file = dest_dir / source_file.name
+                # Only copy if source is newer or dest doesn't exist
+                if not dest_file.exists() or source_file.stat().st_mtime > dest_file.stat().st_mtime:
+                    shutil.copy2(source_file, dest_file)
+                    _LOGGER.debug("Copied %s to %s", source_file.name, dest_file)
+
+    try:
+        await hass.async_add_executor_job(copy_files)
+        _LOGGER.info("Puzzle Game frontend files installed to %s", dest_dir)
+    except Exception as err:
+        _LOGGER.warning("Could not copy frontend files: %s", err)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
@@ -90,6 +131,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             SERVICE_SKIP_WORD,
             SERVICE_REPEAT_CLUE,
             SERVICE_GIVE_UP,
+            SERVICE_SET_SESSION,
         ]:
             hass.services.async_remove(DOMAIN, service)
 
@@ -149,6 +191,15 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
             "message": result["message"],
         }
 
+    async def handle_set_session(call: ServiceCall) -> ServiceResponse:
+        """Handle set session service."""
+        active = call.data.get("active", False)
+        coordinator.set_session_active(active)
+        return {
+            "success": True,
+            "session_active": active,
+        }
+
     # Register services with response support
     hass.services.async_register(
         DOMAIN,
@@ -191,5 +242,13 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
         DOMAIN,
         SERVICE_GIVE_UP,
         handle_give_up,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_SESSION,
+        handle_set_session,
+        schema=SERVICE_SET_SESSION_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )

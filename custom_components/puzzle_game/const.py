@@ -21,6 +21,7 @@ SERVICE_REVEAL_LETTER = "reveal_letter"
 SERVICE_SKIP_WORD = "skip_word"
 SERVICE_REPEAT_CLUE = "repeat_clue"
 SERVICE_GIVE_UP = "give_up"
+SERVICE_SET_SESSION = "set_session"
 
 # Attributes
 ATTR_GAME_ID = "game_id"
@@ -35,6 +36,7 @@ ATTR_SOLVED_WORD_INDICES = "solved_word_indices"
 ATTR_IS_ACTIVE = "is_active"
 ATTR_LAST_MESSAGE = "last_message"
 ATTR_THEME_REVEALED = "theme_revealed"
+ATTR_SESSION_ACTIVE = "session_active"
 
 # Config
 CONF_CONVERSATION_AGENT = "conversation_agent"
