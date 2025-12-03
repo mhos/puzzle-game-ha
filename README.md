@@ -4,8 +4,6 @@
 
 A voice-controlled word puzzle game that runs **natively in Home Assistant**. Works with [View Assist](https://dinki.github.io/View-Assist/) for visual display. Solve themed word puzzles completely hands-free!
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
-
 ## Features
 
 - **Native HA Integration** - Runs inside Home Assistant, no separate server needed
@@ -38,6 +36,10 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 - **View Assist** (optional, for visual dashboard)
 
 ### Step 1: Install via HACS
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
+
+Click the button above, or manually:
 
 1. Open HACS in Home Assistant
 2. Click the three dots menu > **Custom repositories**
