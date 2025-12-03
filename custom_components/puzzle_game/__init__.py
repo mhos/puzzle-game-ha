@@ -93,8 +93,8 @@ async def _async_setup_frontend(hass: HomeAssistant) -> None:
     # Source: custom_components/puzzle_game/www/
     source_dir = Path(__file__).parent / "www"
 
-    # Destination: config/www/puzzle_game/
-    dest_dir = Path(hass.config.path("www")) / "puzzle_game"
+    # Destination: config/www/community/puzzle_game/
+    dest_dir = Path(hass.config.path("www")) / "community" / "puzzle_game"
 
     def copy_files():
         """Copy files (runs in executor)."""

@@ -660,7 +660,7 @@
 
             // Play wrong answer sound
             if (!isCorrect && message.startsWith('Wrong')) {
-                const audio = new Audio('/local/puzzle_game/wrong.mp3');
+                const audio = new Audio('/local/community/puzzle_game/wrong.mp3');
                 audio.volume = 0.5;
                 audio.play().catch(err => console.log('Audio play failed:', err));
             }

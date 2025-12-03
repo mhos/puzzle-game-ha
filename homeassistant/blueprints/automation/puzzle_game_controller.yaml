@@ -72,7 +72,7 @@ action:
               entity_id: "{{ view_assist_device }}"
             data:
               data:
-                url: "/local/puzzle_game/dashboard.html"
+                url: "/local/community/puzzle_game/dashboard.html"
                 mode: hold
               title: "Puzzle Game"
           - service: view_assist.navigate
@@ -194,7 +194,7 @@ action:
                               target:
                                 entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                               data:
-                                media_content_id: "/local/puzzle_game/wrong.mp3"
+                                media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                 media_content_type: "music"
                             - delay:
                                 seconds: 1
@@ -395,7 +395,7 @@ action:
                                       target:
                                         entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                                       data:
-                                        media_content_id: "/local/puzzle_game/wrong.mp3"
+                                        media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                         media_content_type: "music"
                                     - delay:
                                         seconds: 1
@@ -430,7 +430,7 @@ action:
               entity_id: "{{ view_assist_device }}"
             data:
               data:
-                url: "/local/puzzle_game/dashboard.html"
+                url: "/local/community/puzzle_game/dashboard.html"
                 mode: hold
               title: "Puzzle Game"
           - service: view_assist.navigate
@@ -551,7 +551,7 @@ action:
                               target:
                                 entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                               data:
-                                media_content_id: "/local/puzzle_game/wrong.mp3"
+                                media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                 media_content_type: "music"
                             - delay:
                                 seconds: 1
@@ -740,7 +740,7 @@ action:
                                       target:
                                         entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                                       data:
-                                        media_content_id: "/local/puzzle_game/wrong.mp3"
+                                        media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                         media_content_type: "music"
                                     - delay:
                                         seconds: 1
@@ -782,7 +782,7 @@ action:
               entity_id: "{{ view_assist_device }}"
             data:
               data:
-                url: "/local/puzzle_game/dashboard.html"
+                url: "/local/community/puzzle_game/dashboard.html"
                 mode: hold
               title: "Puzzle Game"
           - service: view_assist.navigate
@@ -892,7 +892,7 @@ action:
                               target:
                                 entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                               data:
-                                media_content_id: "/local/puzzle_game/wrong.mp3"
+                                media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                 media_content_type: "music"
                             - delay:
                                 seconds: 1
@@ -1081,7 +1081,7 @@ action:
                                       target:
                                         entity_id: "{{ satellite_entity | replace('assist_satellite.', 'media_player.') }}"
                                       data:
-                                        media_content_id: "/local/puzzle_game/wrong.mp3"
+                                        media_content_id: "/local/community/puzzle_game/wrong.mp3"
                                         media_content_type: "music"
                                     - delay:
                                         seconds: 1

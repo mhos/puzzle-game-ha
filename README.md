@@ -159,8 +159,8 @@ If AI fails, the game uses built-in fallback puzzles.
 - Fallback puzzles will be used if AI fails
 
 ### Dashboard Not Loading
-- Files should auto-copy to `config/www/puzzle_game/`
-- Access at `/local/puzzle_game/dashboard.html`
+- Files should auto-copy to `config/www/community/puzzle_game/`
+- Access at `/local/community/puzzle_game/dashboard.html`
 - Check browser console for errors
 
 ### Voice Commands Not Working
