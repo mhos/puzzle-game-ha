@@ -1,0 +1,520 @@
+blueprint:
+  name: Puzzle Game Controller
+  description: >
+    Voice-activated word puzzle game for View Assist devices.
+
+    This blueprint handles starting, continuing, and playing bonus rounds.
+    The satellite device is automatically detected - no configuration needed!
+
+    Prerequisites:
+    - Install the puzzle_game.yaml package first
+    - Set your API URL in the Puzzle Game API URL helper
+    - Have View Assist set up with an assist satellite
+
+    Voice Commands:
+    - "Start puzzle game" - Begin a new game
+    - "Play bonus game" - Start a bonus round
+    - "Continue puzzle game" - Resume a paused game
+
+    During gameplay (no wake word needed):
+    - Say your answer directly
+    - "spell" - Spell the word letter by letter
+    - "reveal" - Reveal a letter hint
+    - "skip" - Skip current word
+    - "repeat" - Hear the clue again
+    - "pause" - Pause the game
+    - "give up" - End the game
+  domain: automation
+  author: mhos
+  source_url: https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
+  input: {}
+
+mode: single
+
+trigger:
+  - platform: conversation
+    command:
+      - "start puzzle game"
+      - "[start] [a] [new] puzzle [game]"
+    id: start
+  - platform: conversation
+    command:
+      - "play bonus game"
+      - "[start] [a] bonus [puzzle] [game]"
+      - "bonus round"
+    id: bonus
+  - platform: conversation
+    command:
+      - "continue puzzle game"
+      - "resume puzzle game"
+      - "continue [the] [puzzle] game"
+    id: continue
+
+variables:
+  view_assist_device: "{{ view_assist_entity(trigger.device_id) }}"
+  api_url: "{{ states('input_text.puzzle_game_api_url') }}"
+
+action:
+  - choose:
+      #############################################
+      # START NEW GAME
+      #############################################
+      - conditions:
+          - condition: trigger
+            id: start
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.puzzle_last_satellite
+            data:
+              value: "{{ view_assist_device }}"
+
+          # Call API to start game
+          - service: rest_command.puzzle_start_game
+          - delay:
+              seconds: 2
+          - service: homeassistant.update_entity
+            target:
+              entity_id: sensor.puzzle_latest_game
+          - delay:
+              seconds: 1
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.puzzle_game_id
+            data:
+              value: "{{ states('sensor.puzzle_latest_game') }}"
+          - delay:
+              seconds: 1
+          - service: homeassistant.update_entity
+            target:
+              entity_id: sensor.puzzle_game_state
+          - delay:
+              seconds: 1
+
+          # Show dashboard
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              data:
+                url: "{{ api_url }}/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                mode: hold
+              title: "Puzzle Game"
+          - service: view_assist.navigate
+            data:
+              device: "{{ view_assist_device }}"
+              path: "/view-assist/webpage"
+              revert_timeout: 0
+          - service: timer.start
+            target:
+              entity_id: timer.puzzle_game_timeout
+            data:
+              duration: "00:10:00"
+
+          # Set minimal assist prompt (KITT bar) to avoid blocking dashboard
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              assist_prompt: kitt_bar
+
+          # Start background music
+          - variables:
+              media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+          - service: media_player.play_media
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              media_content_type: music
+              media_content_id: "{{ api_url }}/static/startgame.mp3"
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.25
+
+          # Announce first clue
+          - delay:
+              seconds: 1
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+              preannounce: false
+
+          # Announce instructions once
+          - delay:
+              seconds: 1
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
+              preannounce: false
+
+          # Fade out background music
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.20
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.15
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.10
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.05
+          - delay:
+              milliseconds: 500
+          - service: media_player.media_stop
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+
+          # Start active game session script
+          - service: script.puzzle_game_active_session
+            data:
+              satellite_entity: "{{ trigger.satellite_id }}"
+
+      #############################################
+      # START BONUS GAME
+      #############################################
+      - conditions:
+          - condition: trigger
+            id: bonus
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.puzzle_last_satellite
+            data:
+              value: "{{ view_assist_device }}"
+
+          # Call API to start bonus game
+          - service: rest_command.puzzle_start_bonus_game
+          - delay:
+              seconds: 2
+          - service: homeassistant.update_entity
+            target:
+              entity_id: sensor.puzzle_latest_game
+          - delay:
+              seconds: 1
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.puzzle_game_id
+            data:
+              value: "{{ states('sensor.puzzle_latest_game') }}"
+          - delay:
+              seconds: 1
+          - service: homeassistant.update_entity
+            target:
+              entity_id: sensor.puzzle_game_state
+          - delay:
+              seconds: 1
+
+          # Show dashboard
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              data:
+                url: "{{ api_url }}/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                mode: hold
+              title: "Puzzle Game"
+          - service: view_assist.navigate
+            data:
+              device: "{{ view_assist_device }}"
+              path: "/view-assist/webpage"
+              revert_timeout: 0
+          - service: timer.start
+            target:
+              entity_id: timer.puzzle_game_timeout
+            data:
+              duration: "00:10:00"
+
+          # Set minimal assist prompt (KITT bar)
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              assist_prompt: kitt_bar
+
+          # Start background music
+          - variables:
+              media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+          - service: media_player.play_media
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              media_content_type: music
+              media_content_id: "{{ api_url }}/static/startgame.mp3"
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.25
+
+          # Announce first clue
+          - delay:
+              seconds: 1
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "{{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+              preannounce: false
+
+          # Announce instructions
+          - delay:
+              seconds: 1
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
+              preannounce: false
+
+          # Fade out background music
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.20
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.15
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.10
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.05
+          - delay:
+              milliseconds: 500
+          - service: media_player.media_stop
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+
+          # Start active game session script
+          - service: script.puzzle_game_active_session
+            data:
+              satellite_entity: "{{ trigger.satellite_id }}"
+
+      #############################################
+      # CONTINUE/RESUME GAME
+      #############################################
+      - conditions:
+          - condition: trigger
+            id: continue
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.puzzle_last_satellite
+            data:
+              value: "{{ view_assist_device }}"
+
+          # If no game ID stored, try to get latest from backend
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ states('input_text.puzzle_game_id') == '' or states('input_text.puzzle_game_id') == 'unknown' }}"
+                sequence:
+                  - service: homeassistant.update_entity
+                    target:
+                      entity_id: sensor.puzzle_latest_game
+                  - delay:
+                      seconds: 1
+                  - service: input_text.set_value
+                    target:
+                      entity_id: input_text.puzzle_game_id
+                    data:
+                      value: "{{ states('sensor.puzzle_latest_game') }}"
+
+          # Check if we have a game ID
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ states('input_text.puzzle_game_id') == '' or states('input_text.puzzle_game_id') == 'none' or states('input_text.puzzle_game_id') == 'unknown' }}"
+                sequence:
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ trigger.satellite_id }}"
+                    data:
+                      message: "No game found. Say start puzzle game to begin a new game."
+                      preannounce: false
+                  - stop: "No saved game ID"
+
+          # Refresh game state
+          - service: homeassistant.update_entity
+            target:
+              entity_id: sensor.puzzle_game_state
+          - delay:
+              seconds: 1
+
+          # Check if game is still active
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ state_attr('sensor.puzzle_game_state', 'is_active') != true }}"
+                sequence:
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ trigger.satellite_id }}"
+                    data:
+                      message: "That game has ended. Say start puzzle game to begin a new one."
+                      preannounce: false
+                  - stop: "Game no longer active"
+
+          # Show dashboard
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              data:
+                url: "{{ api_url }}/static/dashboard.html?game_id={{ states('input_text.puzzle_game_id') }}"
+                mode: hold
+              title: "Puzzle Game"
+          - service: view_assist.navigate
+            data:
+              device: "{{ view_assist_device }}"
+              path: "/view-assist/webpage"
+              revert_timeout: 0
+
+          # Set minimal assist prompt (KITT bar)
+          - service: view_assist.set_state
+            target:
+              entity_id: "{{ view_assist_device }}"
+            data:
+              assist_prompt: kitt_bar
+
+          # Start background music
+          - variables:
+              media_player_entity: "{{ trigger.satellite_id.replace('assist_satellite.', 'media_player.') }}"
+          - service: media_player.play_media
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              media_content_type: music
+              media_content_id: "{{ api_url }}/static/startgame.mp3"
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.25
+
+          # Announce current clue
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "Welcome back! {{ state_attr('sensor.puzzle_game_state', 'clue') }}"
+              preannounce: false
+
+          # Announce instructions
+          - delay:
+              seconds: 1
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ trigger.satellite_id }}"
+            data:
+              message: "What would you like to do? You can answer, spell, reveal, skip, repeat, or pause."
+              preannounce: false
+
+          # Fade out background music
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.20
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.15
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.10
+          - delay:
+              milliseconds: 500
+          - service: media_player.volume_set
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+            data:
+              volume_level: 0.05
+          - delay:
+              milliseconds: 500
+          - service: media_player.media_stop
+            continue_on_error: true
+            target:
+              entity_id: "{{ media_player_entity }}"
+
+          # Resume active game session script
+          - service: script.puzzle_game_active_session
+            data:
+              satellite_entity: "{{ trigger.satellite_id }}"
