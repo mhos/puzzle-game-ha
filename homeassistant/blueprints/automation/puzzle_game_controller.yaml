@@ -1,6 +1,6 @@
 blueprint:
   name: Puzzle Game Controller
-  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game' to play!"
+  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game', 'Play bonus game', or 'Continue puzzle game'. During gameplay, no wake word needed - just speak your answers, or say 'spell', 'reveal', 'skip', 'repeat', 'pause', or 'give up'."
   domain: automation
   author: mhos
   source_url: https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
