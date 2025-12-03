@@ -1,32 +1,25 @@
-# Voice-Activated Puzzle Game for Home Assistant
+# Puzzle Game for Home Assistant
 
-A voice-controlled word puzzle game that integrates with Home Assistant, [View Assist](https://dinki.github.io/View-Assist/) by [dinki](https://github.com/dinki), and the [View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App) by [msp1974](https://github.com/msp1974). Solve themed word puzzles completely hands-free!
-
-> **CRITICAL REQUIREMENTS:**
->
-> This game requires BOTH of the following to be installed and working BEFORE you can play:
-> 1. **[View Assist](https://dinki.github.io/View-Assist/)** - Home Assistant integration
-> 2. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** - Application running on your display device
->
-> You MUST have both installed and configured. This will NOT work with standard Home Assistant Assist alone.
+A voice-controlled word puzzle game that runs **natively in Home Assistant**. Works with [View Assist](https://dinki.github.io/View-Assist/) for visual display. Solve themed word puzzles completely hands-free!
 
 ## Features
 
-- **Daily Puzzles**: Fresh AI-generated puzzle every day
-- **Unlimited Bonus Rounds**: Play as many bonus games as you want
-- **Voice Control**: Completely hands-free gameplay via Home Assistant voice assistants
-- **Continuous Conversation**: No wake word needed during gameplay!
-- **Visual Dashboard**: Real-time display powered by [View Assist](https://dinki.github.io/View-Assist/)
-- **Persistent State**: Resume games anytime within 24 hours
-- **Smart Gameplay**: Skip words, reveal letters, spell answers, and track your score
-- **Audio Feedback**: Wrong answer buzzer, startup music, and TTS announcements
+- **Native HA Integration** - Runs inside Home Assistant, no separate server needed
+- **Works Everywhere** - HAOS, Container, Core, Supervised - all installation types
+- **Any AI Provider** - Uses your configured HA conversation agent (OpenAI, Google AI, Ollama, etc.)
+- **Daily Puzzles** - Fresh AI-generated puzzle every day
+- **Unlimited Bonus Rounds** - Play as many bonus games as you want
+- **Voice Control** - Completely hands-free gameplay
+- **Continuous Conversation** - No wake word needed during gameplay!
+- **Visual Dashboard** - Real-time display powered by View Assist
+- **Persistent State** - Resume games anytime
 
 ## How It Works
 
 Each puzzle consists of 5 themed words plus a final "connection" answer:
 1. Solve 5 word clues (10 points each)
 2. Earn letter reveals for correct answers
-3. Use reveals to get hints when stuck (costs points!)
+3. Use reveals to get hints when stuck
 4. Skip difficult words and return to them later
 5. Guess the theme that connects all 5 words (20 point bonus)
 
@@ -36,65 +29,58 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 ### Prerequisites
 
-Before installing, ensure you have:
+- **Home Assistant 2024.1.0 or newer**
+- **A conversation agent configured** (OpenAI, Google AI, Ollama, or any HA-compatible AI)
+- **View Assist** (optional, for visual dashboard)
 
-1. **[View Assist](https://dinki.github.io/View-Assist/)** installed in Home Assistant
-2. **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** running on your display device
-3. **[Ollama](https://ollama.ai/)** with `llama3.2:3b` model installed
-4. **Home Assistant 2024.x or newer**
+### Step 1: Install via HACS
 
-### Step 1: Install Ollama
+1. Open HACS in Home Assistant
+2. Click the three dots menu > **Custom repositories**
+3. Add: `https://github.com/mhos/puzzle-game-ha`
+4. Category: **Integration**
+5. Click **Add**
+6. Find "Puzzle Game" and click **Download**
+7. Restart Home Assistant
+
+### Step 2: Add the Integration
+
+1. Go to **Settings > Devices & Services**
+2. Click **Add Integration**
+3. Search for "Puzzle Game"
+4. Select which AI conversation agent to use for puzzle generation
+5. Click **Submit**
+
+### Step 3: Copy Static Files
+
+Copy the dashboard and sound files to your `www` folder:
 
 ```bash
-# Install Ollama (visit ollama.ai for your platform)
-# Then pull the required model:
-ollama pull llama3.2:3b
+# From the integration folder
+cp -r custom_components/puzzle_game/www/* /config/www/puzzle_game/
 ```
 
-### Step 2: Deploy the Game Server
+Or create the folder and copy manually:
+- Create folder: `config/www/puzzle_game/`
+- Copy: `dashboard.html`, `wrong.mp3`
 
-```bash
-git clone https://github.com/mhos/puzzle-game-ha.git
-cd puzzle-game-ha
-cp .env.example .env
-# Edit .env and set OLLAMA_URL to your Ollama server
-docker-compose up -d
-```
+### Step 4: Install the Package (for voice control)
 
-The server will start on port 5000.
-
-### Step 3: Install the Home Assistant Package
-
-1. **Enable packages** in your `configuration.yaml` (if not already):
+1. Copy `homeassistant/packages/puzzle_game.yaml` to your `config/packages/` folder
+2. Add to `configuration.yaml` if not already present:
    ```yaml
    homeassistant:
      packages: !include_dir_named packages
    ```
+3. Restart Home Assistant
 
-2. **Copy the package file** to your Home Assistant config:
-   ```bash
-   cp homeassistant/packages/puzzle_game.yaml /config/packages/
-   ```
-
-3. **Restart Home Assistant**
-
-4. **Configure the API URL**:
-   - Go to **Settings > Devices & Services > Helpers**
-   - Find **"Puzzle Game API URL"**
-   - Click it and set the value to your server address (e.g., `http://192.168.1.100:5000`)
-
-### Step 4: Import the Blueprint
+### Step 5: Import the Blueprint
 
 1. Go to **Settings > Automations & Scenes > Blueprints**
 2. Click **Import Blueprint**
-3. Paste this URL:
-   ```
-   https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
-   ```
+3. Paste: `https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml`
 4. Click **Preview** then **Import**
 5. Click **Create Automation** from the blueprint
-
-That's it! The satellite device is automatically detected when you start the game.
 
 ---
 
@@ -109,154 +95,137 @@ Say to your View Assist device:
 
 ### During Gameplay (No Wake Word Needed!)
 
-Once the game starts, you can speak directly without saying the wake word:
+Once the game starts, speak directly without the wake word:
 
 | Command | Action |
 |---------|--------|
 | Say the word directly | Submit your answer |
-| "The answer is [word]" | Alternative way to answer |
-| "Spell" | Enter spelling mode (say letters one by one, then "done") |
-| "Reveal" | Use a reveal to get a letter hint |
+| "Spell" | Enter spelling mode |
+| "Reveal" | Get a letter hint |
 | "Skip" | Skip current word |
 | "Repeat" | Hear the clue again |
-| "Pause" | Pause the game (resume later with "continue puzzle game") |
+| "Pause" | Pause the game |
 | "Give up" | End the game |
 
 ### Spelling Mode
 
-Having trouble with pronunciation? Say "spell" to enter spelling mode:
-1. Say each letter one at a time: "D" ... "O" ... "G"
+Say "spell" to enter spelling mode:
+1. Say each letter one at a time
 2. Say "done" when finished
-3. The system will announce and submit your spelled word
+3. The system will submit your spelled word
 
 ---
 
-## Architecture
+## Services
 
-- **Backend**: Python FastAPI server with SQLAlchemy ORM
-- **AI**: Ollama (llama3.2:3b) generates puzzles with themes and clues
-- **Database**: SQLite for game state persistence
-- **Frontend**: Real-time HTML dashboard
-- **Integration**: Home Assistant Blueprint + Package + View Assist
+The integration provides these services:
+
+| Service | Description |
+|---------|-------------|
+| `puzzle_game.start_game` | Start a new game (set `bonus: true` for bonus round) |
+| `puzzle_game.submit_answer` | Submit an answer |
+| `puzzle_game.reveal_letter` | Reveal a letter |
+| `puzzle_game.skip_word` | Skip current word |
+| `puzzle_game.repeat_clue` | Repeat the clue |
+| `puzzle_game.give_up` | End the game |
+
+## Sensor
+
+`sensor.puzzle_game` provides:
+- Current game state
+- Score, reveals, phase
+- Current clue and blanks
+- Solved words
+- Last feedback message
+
+---
 
 ## Project Structure
 
 ```
 puzzle-game-ha/
-├── app/
-│   ├── main.py              # FastAPI application
-│   ├── game_logic.py        # Game state management
-│   ├── models.py            # Database models
-│   ├── database.py          # Database connection
-│   ├── ollama_client.py     # Ollama API client
-│   ├── config.py            # Configuration
-│   ├── requirements.txt     # Python dependencies
-│   ├── Dockerfile           # Container definition
-│   └── static/
-│       ├── dashboard.html   # Game dashboard
-│       ├── startgame.mp3    # Startup music
-│       └── wrong.mp3        # Wrong answer sound
+├── custom_components/
+│   └── puzzle_game/
+│       ├── __init__.py           # Integration setup
+│       ├── manifest.json         # Integration metadata
+│       ├── const.py              # Constants
+│       ├── config_flow.py        # UI configuration
+│       ├── coordinator.py        # State coordinator
+│       ├── game_manager.py       # Game logic
+│       ├── ai_client.py          # AI puzzle generation
+│       ├── storage.py            # Persistent storage
+│       ├── sensor.py             # Game state sensor
+│       ├── services.yaml         # Service definitions
+│       └── www/
+│           ├── dashboard.html    # Game dashboard
+│           └── wrong.mp3         # Sound effect
 ├── homeassistant/
 │   ├── packages/
-│   │   └── puzzle_game.yaml           # HA package (helpers, scripts, automations)
+│   │   └── puzzle_game.yaml      # Voice control script
 │   └── blueprints/
 │       └── automation/
-│           └── puzzle_game_controller.yaml  # HA blueprint
-├── docker-compose.yml       # Docker orchestration
-├── .env.example            # Environment variables template
-└── README.md               # This file
+│           └── puzzle_game_controller.yaml
+├── hacs.json                     # HACS configuration
+└── README.md
 ```
+
+---
 
 ## Configuration
 
-### Backend Configuration (.env)
+### Conversation Agent
 
-```env
-# Ollama API endpoint
-OLLAMA_URL=http://localhost:11434
+During setup, you select which conversation agent generates puzzles. You can change this later in the integration options.
 
-# Model to use for puzzle generation
-OLLAMA_MODEL=llama3.2:3b
+Supported agents:
+- OpenAI (ChatGPT)
+- Google Generative AI
+- Ollama (local)
+- Any HA-compatible conversation agent
 
-# Database path
-DATABASE_URL=sqlite+aiosqlite:///./data/puzzle_game.db
+If AI fails, the game uses built-in fallback puzzles.
 
-# Server settings
-HOST=0.0.0.0
-PORT=5000
-```
-
-### Home Assistant Configuration
-
-The only user configuration needed is the **Puzzle Game API URL** helper. Set this through the Home Assistant UI:
-- Settings > Devices & Services > Helpers > "Puzzle Game API URL"
-- Example: `http://192.168.1.100:5000`
-
-## API Endpoints
-
-- `GET /` - Health check
-- `POST /api/game/start` - Start/resume game
-- `GET /api/game/latest` - Get latest game ID
-- `GET /api/game/{game_id}` - Get game state
-- `POST /api/game/{game_id}/answer` - Submit answer
-- `POST /api/game/{game_id}/reveal` - Reveal letter
-- `POST /api/game/{game_id}/skip` - Skip word
-- `POST /api/game/{game_id}/repeat` - Repeat clue
-- `POST /api/game/{game_id}/giveup` - Give up
+---
 
 ## Troubleshooting
 
-### Ollama Issues
-- See the [Ollama Setup Guide](docs/OLLAMA_SETUP.md) for detailed troubleshooting
-- Verify Ollama is running: `curl http://localhost:11434/api/tags`
-- Check that llama3.2:3b model is installed: `ollama list`
+### Integration Not Found
+- Restart Home Assistant after installing via HACS
+- Check that `custom_components/puzzle_game` folder exists
 
-### Game Doesn't Start
-- Verify the API server is accessible from Home Assistant
-- Check that **Puzzle Game API URL** helper is set correctly
+### Puzzles Not Generating
+- Verify your conversation agent is working (test in Developer Tools > Services)
 - Check Home Assistant logs for errors
+- Fallback puzzles will be used if AI fails
 
-### Dashboard Doesn't Appear
-- Ensure View Assist integration is configured
-- Verify the API URL helper value is correct
-- Check that port 5000 is accessible from your View Assist device
+### Dashboard Not Loading
+- Ensure files are in `config/www/puzzle_game/`
+- Access at `/local/puzzle_game/dashboard.html`
+- Check browser console for errors
 
-### Voice Commands Not Working During Gameplay
-- Make sure the blueprint automation was created after importing
-- Check that `script.puzzle_game_active_session` exists (from the package)
-- Verify your assist satellite supports `ask_question`
+### Voice Commands Not Working
+- Verify the blueprint automation is enabled
+- Check that `script.puzzle_game_active_session` exists
+- Ensure View Assist is properly configured
 
-### Wrong Answer Buzzer Doesn't Play
-- Verify wrong.mp3 exists in app/static/
-- Check media_player entity ID matches your View Assist device
+---
 
-## Manual Installation (Without Docker)
+## Manual Installation (Without HACS)
 
-```bash
-cd app
-pip install -r requirements.txt
-cp ../.env.example ../.env
-# Edit .env if your Ollama is not on localhost:11434
-python -m uvicorn main:app --host 0.0.0.0 --port 5000
-```
+1. Copy `custom_components/puzzle_game` to your `config/custom_components/` folder
+2. Copy `www/puzzle_game` files to `config/www/puzzle_game/`
+3. Copy `homeassistant/packages/puzzle_game.yaml` to `config/packages/`
+4. Restart Home Assistant
+5. Add integration via Settings > Devices & Services
 
-Then follow the Home Assistant setup steps above.
+---
 
-## Contributing
+## Credits
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+- **[View Assist](https://dinki.github.io/View-Assist/)** by **[dinki](https://github.com/dinki)**
+- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** by **[msp1974](https://github.com/msp1974)**
+- **Home Assistant Community**
 
 ## License
 
 MIT License - See LICENSE file for details
-
-## Credits
-
-This project would not be possible without:
-
-- **[View Assist](https://dinki.github.io/View-Assist/)** by **[dinki](https://github.com/dinki)** - For creating the amazing View Assist integration that makes visual voice assistants possible
-- **[View Assist Companion App](https://github.com/msp1974/ViewAssist_Companion_App)** by **[msp1974](https://github.com/msp1974)** - For the Android companion app that powers the display functionality
-- **[Ollama](https://ollama.ai/)** - For enabling local AI puzzle generation
-- **Home Assistant Community** - For building an incredible smart home platform
-
-Built for the Home Assistant community with love

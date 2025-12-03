@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Puzzle Game",
+        "description": "Configure which AI assistant will generate puzzles. If you have multiple conversation agents (OpenAI, Google AI, Ollama, etc.), you can select which one to use.",
+        "data": {
+          "conversation_agent": "AI Assistant for puzzle generation"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Puzzle Game is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Puzzle Game Options",
+        "data": {
+          "conversation_agent": "AI Assistant for puzzle generation"
+        }
+      }
+    }
+  }
+}

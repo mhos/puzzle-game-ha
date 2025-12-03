@@ -1,0 +1,39 @@
+start_game:
+  name: Start Game
+  description: Start a new puzzle game or continue an existing one.
+  fields:
+    bonus:
+      name: Bonus Game
+      description: If true, starts a bonus game instead of the daily puzzle.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+submit_answer:
+  name: Submit Answer
+  description: Submit an answer for the current word or theme.
+  fields:
+    answer:
+      name: Answer
+      description: The answer to submit.
+      required: true
+      example: "elephant"
+      selector:
+        text:
+
+reveal_letter:
+  name: Reveal Letter
+  description: Reveal a random letter in the current word. Uses one reveal credit.
+
+skip_word:
+  name: Skip Word
+  description: Skip the current word and move to the next one. Only works in phase 1.
+
+repeat_clue:
+  name: Repeat Clue
+  description: Get the current clue repeated.
+
+give_up:
+  name: Give Up
+  description: End the game and reveal all answers.
