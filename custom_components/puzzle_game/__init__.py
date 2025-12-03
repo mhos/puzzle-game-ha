@@ -99,41 +99,54 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_register_panel(hass: HomeAssistant) -> None:
     """Register the Puzzle Game panel in the sidebar."""
-    # Check if panel already registered
-    if DOMAIN in hass.data.get("frontend_panels", {}):
+    # Check if panel already registered by looking at frontend panels
+    if hass.data.get("frontend_panels", {}).get(PANEL_URL):
+        _LOGGER.debug("Panel already registered at /%s", PANEL_URL)
         return
 
     # Path to frontend files
     frontend_path = Path(__file__).parent / "frontend"
+    panel_js_path = frontend_path / "panel.js"
+
+    if not panel_js_path.exists():
+        _LOGGER.error("Panel JS file not found at %s", panel_js_path)
+        return
 
     # Register static path for the panel JS file
-    await hass.http.async_register_static_paths(
-        [
-            StaticPathConfig(
-                f"/puzzle_game/panel-{PANEL_VERSION}.js",
-                str(frontend_path / "panel.js"),
-                True,  # Cache
-            )
-        ]
-    )
+    try:
+        await hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    f"/puzzle_game/panel-{PANEL_VERSION}.js",
+                    str(panel_js_path),
+                    True,  # Cache
+                )
+            ]
+        )
+    except Exception as err:
+        _LOGGER.error("Failed to register static path: %s", err)
+        return
 
     # Register the panel in the sidebar
-    async_register_built_in_panel(
-        hass,
-        component_name="custom",
-        frontend_url_path=PANEL_URL,
-        sidebar_title=PANEL_TITLE,
-        sidebar_icon=PANEL_ICON,
-        config={
-            "_panel_custom": {
-                "name": "puzzle-game-panel",
-                "module_url": f"/puzzle_game/panel-{PANEL_VERSION}.js",
-            }
-        },
-        require_admin=False,
-    )
-
-    _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
+    try:
+        async_register_built_in_panel(
+            hass,
+            component_name="custom",
+            frontend_url_path=PANEL_URL,
+            sidebar_title=PANEL_TITLE,
+            sidebar_icon=PANEL_ICON,
+            config={
+                "_panel_custom": {
+                    "name": "puzzle-game-panel",
+                    "module_url": f"/puzzle_game/panel-{PANEL_VERSION}.js",
+                    "embed_iframe": False,
+                }
+            },
+            require_admin=False,
+        )
+        _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
+    except Exception as err:
+        _LOGGER.error("Failed to register panel: %s", err)
 
     # Clean up old www files from previous versions
     await _async_cleanup_old_files(hass)
