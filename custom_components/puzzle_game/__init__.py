@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
 
+from homeassistant.components.frontend import async_register_built_in_panel
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
@@ -28,6 +31,12 @@ from .storage import PuzzleGameStorage
 from .coordinator import PuzzleGameCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# Panel version - increment when frontend changes
+PANEL_VERSION = "1.0.0"
+PANEL_URL = "puzzle-game"
+PANEL_TITLE = "Puzzle Game"
+PANEL_ICON = "mdi:owl"
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -55,8 +64,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Puzzle Game from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Auto-copy www files to config/www/puzzle_game/
-    await _async_setup_frontend(hass)
+    # Register the panel (sidebar entry) and serve frontend files
+    await _async_register_panel(hass)
 
     # Initialize storage
     storage = PuzzleGameStorage(hass)
@@ -88,57 +97,66 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _async_setup_frontend(hass: HomeAssistant) -> None:
-    """Copy frontend files to www directory and clean up old files."""
-    # Source: custom_components/puzzle_game/www/
-    source_dir = Path(__file__).parent / "www"
+async def _async_register_panel(hass: HomeAssistant) -> None:
+    """Register the Puzzle Game panel in the sidebar."""
+    # Check if panel already registered
+    if DOMAIN in hass.data.get("frontend_panels", {}):
+        return
 
-    # Destination: config/www/community/puzzle_game/
-    dest_dir = Path(hass.config.path("www")) / "community" / "puzzle_game"
+    # Path to frontend files
+    frontend_path = Path(__file__).parent / "frontend"
 
-    # Files that should no longer exist (old/deprecated files)
-    deprecated_files = [
-        "dashboard.html",
-        "wrong.mp3",
-        "startup.mp3",
-    ]
+    # Register static path for the panel JS file
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                f"/puzzle_game/panel-{PANEL_VERSION}.js",
+                str(frontend_path / "panel.js"),
+                True,  # Cache
+            )
+        ]
+    )
 
-    def copy_and_cleanup():
-        """Copy files and remove deprecated ones (runs in executor)."""
-        # Create destination directory
-        dest_dir.mkdir(parents=True, exist_ok=True)
+    # Register the panel in the sidebar
+    async_register_built_in_panel(
+        hass,
+        component_name="custom",
+        frontend_url_path=PANEL_URL,
+        sidebar_title=PANEL_TITLE,
+        sidebar_icon=PANEL_ICON,
+        config={
+            "_panel_custom": {
+                "name": "puzzle-game-panel",
+                "module_url": f"/puzzle_game/panel-{PANEL_VERSION}.js",
+            }
+        },
+        require_admin=False,
+    )
 
-        # Remove deprecated files
-        for old_file in deprecated_files:
-            old_path = dest_dir / old_file
-            if old_path.exists():
-                old_path.unlink()
-                _LOGGER.info("Removed deprecated file: %s", old_file)
+    _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
 
-        # Get list of current source files
-        source_files = {f.name for f in source_dir.iterdir() if f.is_file()}
+    # Clean up old www files from previous versions
+    await _async_cleanup_old_files(hass)
 
-        # Remove any files in dest that are not in source (cleanup orphans)
-        if dest_dir.exists():
-            for dest_file in dest_dir.iterdir():
-                if dest_file.is_file() and dest_file.name not in source_files:
-                    dest_file.unlink()
-                    _LOGGER.info("Removed orphaned file: %s", dest_file.name)
 
-        # Copy each file from source
-        for source_file in source_dir.iterdir():
-            if source_file.is_file():
-                dest_file = dest_dir / source_file.name
-                # Only copy if source is newer or dest doesn't exist
-                if not dest_file.exists() or source_file.stat().st_mtime > dest_file.stat().st_mtime:
-                    shutil.copy2(source_file, dest_file)
-                    _LOGGER.debug("Copied %s to %s", source_file.name, dest_file)
+async def _async_cleanup_old_files(hass: HomeAssistant) -> None:
+    """Remove old www files from previous versions."""
+    # Old destination from previous versions
+    old_www_dir = Path(hass.config.path("www")) / "community" / "puzzle_game"
+
+    def cleanup():
+        """Remove old files (runs in executor)."""
+        if old_www_dir.exists():
+            try:
+                shutil.rmtree(old_www_dir)
+                _LOGGER.info("Removed old www files from %s", old_www_dir)
+            except Exception as err:
+                _LOGGER.debug("Could not remove old www files: %s", err)
 
     try:
-        await hass.async_add_executor_job(copy_and_cleanup)
-        _LOGGER.info("Puzzle Game frontend files installed to %s", dest_dir)
+        await hass.async_add_executor_job(cleanup)
     except Exception as err:
-        _LOGGER.warning("Could not copy frontend files: %s", err)
+        _LOGGER.debug("Cleanup failed: %s", err)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
