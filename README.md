@@ -1,6 +1,10 @@
 # Puzzle Game for Home Assistant
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
+
 A voice-controlled word puzzle game that runs **natively in Home Assistant**. Works with [View Assist](https://dinki.github.io/View-Assist/) for visual display. Solve themed word puzzles completely hands-free!
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
 
 ## Features
 
