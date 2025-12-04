@@ -33,7 +33,7 @@ from .coordinator import PuzzleGameCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # Panel version - increment when frontend changes
-PANEL_VERSION = "1.0.2"
+PANEL_VERSION = "1.0.3"
 PANEL_URL = "puzzle-game"
 PANEL_TITLE = "Puzzle Game"
 PANEL_ICON = "mdi:owl"
@@ -134,20 +134,18 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
     try:
         await panel_custom.async_register_panel(
             hass,
-            webcomponent_name="puzzle-game-panel",
             frontend_url_path=PANEL_URL,
+            webcomponent_name="puzzle-game-panel",
             sidebar_title=PANEL_TITLE,
             sidebar_icon=PANEL_ICON,
             module_url=f"/puzzle_game/panel-{PANEL_VERSION}.js",
             embed_iframe=False,
+            trust_external=False,
             require_admin=False,
         )
         _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
     except Exception as err:
-        if "already registered" in str(err).lower():
-            _LOGGER.debug("Panel already registered at /%s", PANEL_URL)
-        else:
-            _LOGGER.error("Failed to register panel: %s", err)
+        _LOGGER.error("Failed to register panel: %s", err)
 
     # Clean up old www files from previous versions
     await _async_cleanup_old_files(hass)
