@@ -8,6 +8,7 @@ class PuzzleGamePanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._hass = null;
+    this._rendered = false;
     this._lastMessage = null;
     this._feedbackTimeout = null;
     this._updateInterval = null;
@@ -15,13 +16,19 @@ class PuzzleGamePanel extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    this._updateDisplay();
+    // Only update if DOM has been rendered
+    if (this._rendered) {
+      this._updateDisplay();
+    }
   }
 
   connectedCallback() {
     console.log("PuzzleGamePanel: connectedCallback called");
     this._render();
+    this._rendered = true;
     console.log("PuzzleGamePanel: _render completed");
+    // Initial update now that DOM is ready
+    this._updateDisplay();
     // Update every 2 seconds
     this._updateInterval = setInterval(() => this._updateDisplay(), 2000);
   }
