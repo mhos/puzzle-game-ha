@@ -33,7 +33,7 @@ from .coordinator import PuzzleGameCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # Panel version - increment when frontend changes
-PANEL_VERSION = "1.0.4"
+PANEL_VERSION = "1.0.5"
 PANEL_URL = "puzzle-game"
 PANEL_TITLE = "Puzzle Game"
 PANEL_ICON = "mdi:owl"
@@ -99,13 +99,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_register_panel(hass: HomeAssistant) -> None:
     """Register the Puzzle Game panel in the sidebar."""
+    _LOGGER.info("Starting panel registration for Puzzle Game")
+
     # Path to frontend files
     frontend_path = Path(__file__).parent / "frontend"
     panel_js_path = frontend_path / "panel.js"
 
+    _LOGGER.info("Looking for panel.js at: %s", panel_js_path)
+
     if not panel_js_path.exists():
         _LOGGER.error("Panel JS file not found at %s", panel_js_path)
         return
+
+    _LOGGER.info("Panel JS file found, registering static path")
 
     # Register static path for the panel JS file
     try:
@@ -118,17 +124,19 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
                 )
             ]
         )
-        _LOGGER.debug("Static path registered: /puzzle_game/panel-%s.js", PANEL_VERSION)
+        _LOGGER.info("Static path registered: /puzzle_game/panel-%s.js", PANEL_VERSION)
     except RuntimeError as err:
         # Static path may already be registered from a previous load
         if "already registered" in str(err).lower():
-            _LOGGER.debug("Static path already registered, continuing")
+            _LOGGER.info("Static path already registered, continuing")
         else:
             _LOGGER.error("Failed to register static path: %s", err)
             return
     except Exception as err:
         _LOGGER.error("Failed to register static path: %s", err)
         return
+
+    _LOGGER.info("Registering panel with panel_custom.async_register_panel")
 
     # Register the panel using panel_custom
     try:
@@ -143,9 +151,9 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
             trust_external=False,
             require_admin=False,
         )
-        _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
+        _LOGGER.info("Puzzle Game panel successfully registered at /%s", PANEL_URL)
     except Exception as err:
-        _LOGGER.error("Failed to register panel: %s", err)
+        _LOGGER.error("Failed to register panel: %s (type: %s)", err, type(err).__name__)
 
     # Clean up old www files from previous versions
     await _async_cleanup_old_files(hass)
