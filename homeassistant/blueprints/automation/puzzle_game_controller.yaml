@@ -45,18 +45,10 @@ action:
               bonus: false
           - delay:
               seconds: 2
-          - service: view_assist.set_state
-            target:
-              entity_id: "{{ view_assist_device }}"
-            data:
-              data:
-                url: "/local/community/puzzle_game/dashboard.html"
-                mode: hold
-              title: "Puzzle Game"
           - service: view_assist.navigate
             data:
               device: "{{ view_assist_device }}"
-              path: "/view-assist/webpage"
+              path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
             target:
@@ -403,18 +395,10 @@ action:
               bonus: true
           - delay:
               seconds: 2
-          - service: view_assist.set_state
-            target:
-              entity_id: "{{ view_assist_device }}"
-            data:
-              data:
-                url: "/local/community/puzzle_game/dashboard.html"
-                mode: hold
-              title: "Puzzle Game"
           - service: view_assist.navigate
             data:
               device: "{{ view_assist_device }}"
-              path: "/view-assist/webpage"
+              path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
             target:
@@ -755,18 +739,10 @@ action:
                       message: "No active game found. Say start puzzle game to begin a new one."
                       preannounce: false
                   - stop: "No active game"
-          - service: view_assist.set_state
-            target:
-              entity_id: "{{ view_assist_device }}"
-            data:
-              data:
-                url: "/local/community/puzzle_game/dashboard.html"
-                mode: hold
-              title: "Puzzle Game"
           - service: view_assist.navigate
             data:
               device: "{{ view_assist_device }}"
-              path: "/view-assist/webpage"
+              path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
             target:
