@@ -9,7 +9,7 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.components.frontend import async_register_built_in_panel
+from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -33,7 +33,7 @@ from .coordinator import PuzzleGameCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # Panel version - increment when frontend changes
-PANEL_VERSION = "1.0.1"
+PANEL_VERSION = "1.0.2"
 PANEL_URL = "puzzle-game"
 PANEL_TITLE = "Puzzle Game"
 PANEL_ICON = "mdi:owl"
@@ -130,38 +130,24 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
         _LOGGER.error("Failed to register static path: %s", err)
         return
 
-    # Check if panel already registered using correct attribute
-    panels = hass.data.get("frontend", {}).get("panels", {})
-    if PANEL_URL in panels:
-        _LOGGER.debug("Panel already registered at /%s", PANEL_URL)
-        return
-
-    # Register the panel in the sidebar
+    # Register the panel using panel_custom
     try:
-        async_register_built_in_panel(
+        await panel_custom.async_register_panel(
             hass,
-            component_name="custom",
+            webcomponent_name="puzzle-game-panel",
             frontend_url_path=PANEL_URL,
             sidebar_title=PANEL_TITLE,
             sidebar_icon=PANEL_ICON,
-            config={
-                "_panel_custom": {
-                    "name": "puzzle-game-panel",
-                    "module_url": f"/puzzle_game/panel-{PANEL_VERSION}.js",
-                    "embed_iframe": False,
-                }
-            },
+            module_url=f"/puzzle_game/panel-{PANEL_VERSION}.js",
+            embed_iframe=False,
             require_admin=False,
         )
         _LOGGER.info("Puzzle Game panel registered at /%s", PANEL_URL)
-    except ValueError as err:
-        # Panel may already be registered
+    except Exception as err:
         if "already registered" in str(err).lower():
             _LOGGER.debug("Panel already registered at /%s", PANEL_URL)
         else:
             _LOGGER.error("Failed to register panel: %s", err)
-    except Exception as err:
-        _LOGGER.error("Failed to register panel: %s", err)
 
     # Clean up old www files from previous versions
     await _async_cleanup_old_files(hass)
