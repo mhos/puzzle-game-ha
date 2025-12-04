@@ -686,4 +686,7 @@ class PuzzleGamePanel extends HTMLElement {
   }
 }
 
-customElements.define("puzzle-game-panel", PuzzleGamePanel);
+// Only register if not already defined (prevents errors on reload)
+if (!customElements.get("puzzle-game-panel")) {
+  customElements.define("puzzle-game-panel", PuzzleGamePanel);
+}
