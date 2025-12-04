@@ -19,7 +19,9 @@ class PuzzleGamePanel extends HTMLElement {
   }
 
   connectedCallback() {
+    console.log("PuzzleGamePanel: connectedCallback called");
     this._render();
+    console.log("PuzzleGamePanel: _render completed");
     // Update every 2 seconds
     this._updateInterval = setInterval(() => this._updateDisplay(), 2000);
   }
@@ -43,15 +45,22 @@ class PuzzleGamePanel extends HTMLElement {
         }
 
         :host {
-          display: block;
+          display: flex;
+          flex-direction: column;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           min-height: 100vh;
-          display: flex;
+          height: 100%;
+          width: 100%;
           align-items: center;
           justify-content: center;
           color: white;
           padding: 10px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
         }
 
         .container {
