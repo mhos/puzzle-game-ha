@@ -135,12 +135,9 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
-                # Skip to next iteration if no valid response (timeout or error)
-                - if:
-                    - condition: template
-                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
-                  then:
-                    - stop: "No response received, continuing loop"
+                # Small delay before processing to ensure satellite is ready
+                - delay:
+                    milliseconds: 500
                 - choose:
                     # ANSWER
                     - conditions:
@@ -383,7 +380,13 @@ action:
                                         message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
                                         preannounce: false
 
-                  default: []
+                  default:
+                    # No recognized action, add delay before next listen
+                    - delay:
+                        seconds: 1
+                # Delay before next ask_question to let satellite reset
+                - delay:
+                    seconds: 2
 
           - service: puzzle_game.set_session
             data:
@@ -491,12 +494,9 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
-                # Skip to next iteration if no valid response (timeout or error)
-                - if:
-                    - condition: template
-                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
-                  then:
-                    - stop: "No response received, continuing loop"
+                # Small delay before processing to ensure satellite is ready
+                - delay:
+                    milliseconds: 500
                 - choose:
                     - conditions:
                         - condition: template
@@ -725,7 +725,13 @@ action:
                                       data:
                                         message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
                                         preannounce: false
-                  default: []
+                  default:
+                    # No recognized action, add delay before next listen
+                    - delay:
+                        seconds: 1
+                # Delay before next ask_question to let satellite reset
+                - delay:
+                    seconds: 2
 
           - service: puzzle_game.set_session
             data:
@@ -830,12 +836,9 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
-                # Skip to next iteration if no valid response (timeout or error)
-                - if:
-                    - condition: template
-                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
-                  then:
-                    - stop: "No response received, continuing loop"
+                # Small delay before processing to ensure satellite is ready
+                - delay:
+                    milliseconds: 500
                 - choose:
                     - conditions:
                         - condition: template
@@ -1064,7 +1067,13 @@ action:
                                       data:
                                         message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
                                         preannounce: false
-                  default: []
+                  default:
+                    # No recognized action, add delay before next listen
+                    - delay:
+                        seconds: 1
+                # Delay before next ask_question to let satellite reset
+                - delay:
+                    seconds: 2
 
           - service: puzzle_game.set_session
             data:
