@@ -93,7 +93,6 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
-                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
@@ -450,7 +449,6 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
-                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
@@ -790,7 +788,6 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
-                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
