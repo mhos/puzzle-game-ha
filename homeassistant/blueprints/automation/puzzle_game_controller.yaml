@@ -93,6 +93,7 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
+                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
@@ -135,11 +136,17 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
+                # Skip to next iteration if no valid response (timeout or error)
+                - if:
+                    - condition: template
+                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
+                  then:
+                    - stop: "No response received, continuing loop"
                 - choose:
                     # ANSWER
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'answer' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'answer' }}"
                       sequence:
                         - service: puzzle_game.submit_answer
                           data:
@@ -179,7 +186,7 @@ action:
                     # REVEAL
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'reveal' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'reveal' }}"
                       sequence:
                         - service: puzzle_game.reveal_letter
                         - delay:
@@ -195,7 +202,7 @@ action:
                     # SKIP
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'skip' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'skip' }}"
                       sequence:
                         - service: puzzle_game.skip_word
                         - delay:
@@ -211,7 +218,7 @@ action:
                     # REPEAT
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'repeat' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'repeat' }}"
                       sequence:
                         - service: puzzle_game.repeat_clue
                         - delay:
@@ -227,7 +234,7 @@ action:
                     # PAUSE
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'pause' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'pause' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -243,7 +250,7 @@ action:
                     # GIVE UP
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'giveup' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'giveup' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -262,7 +269,7 @@ action:
                     # SPELL MODE
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'spell' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'spell' }}"
                       sequence:
                         - service: assist_satellite.announce
                           continue_on_error: true
@@ -443,6 +450,7 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
+                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
@@ -485,6 +493,12 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
+                # Skip to next iteration if no valid response (timeout or error)
+                - if:
+                    - condition: template
+                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
+                  then:
+                    - stop: "No response received, continuing loop"
                 - choose:
                     - conditions:
                         - condition: template
@@ -526,7 +540,7 @@ action:
                                 preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'reveal' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'reveal' }}"
                       sequence:
                         - service: puzzle_game.reveal_letter
                         - delay:
@@ -540,7 +554,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'skip' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'skip' }}"
                       sequence:
                         - service: puzzle_game.skip_word
                         - delay:
@@ -554,7 +568,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'repeat' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'repeat' }}"
                       sequence:
                         - service: puzzle_game.repeat_clue
                         - delay:
@@ -568,7 +582,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'pause' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'pause' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -582,7 +596,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'giveup' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'giveup' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -599,7 +613,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'spell' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'spell' }}"
                       sequence:
                         - service: assist_satellite.announce
                           continue_on_error: true
@@ -776,6 +790,7 @@ action:
                     question: ""
                     entity_id: "{{ satellite_entity }}"
                     preannounce: false
+                    timeout: 60
                     answers:
                       - id: reveal
                         sentences:
@@ -818,6 +833,12 @@ action:
                           - "the answer is {answer}"
                           - "is it {answer}"
                   response_variable: player_action
+                # Skip to next iteration if no valid response (timeout or error)
+                - if:
+                    - condition: template
+                      value_template: "{{ player_action is not defined or player_action.id is not defined }}"
+                  then:
+                    - stop: "No response received, continuing loop"
                 - choose:
                     - conditions:
                         - condition: template
@@ -859,7 +880,7 @@ action:
                                 preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'reveal' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'reveal' }}"
                       sequence:
                         - service: puzzle_game.reveal_letter
                         - delay:
@@ -873,7 +894,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'skip' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'skip' }}"
                       sequence:
                         - service: puzzle_game.skip_word
                         - delay:
@@ -887,7 +908,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'repeat' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'repeat' }}"
                       sequence:
                         - service: puzzle_game.repeat_clue
                         - delay:
@@ -901,7 +922,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'pause' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'pause' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -915,7 +936,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'giveup' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'giveup' }}"
                       sequence:
                         - service: puzzle_game.set_session
                           data:
@@ -932,7 +953,7 @@ action:
                             preannounce: false
                     - conditions:
                         - condition: template
-                          value_template: "{{ player_action.id == 'spell' }}"
+                          value_template: "{{ player_action is defined and player_action.id is defined and player_action.id == 'spell' }}"
                       sequence:
                         - service: assist_satellite.announce
                           continue_on_error: true
