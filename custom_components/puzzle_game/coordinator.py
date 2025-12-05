@@ -399,8 +399,8 @@ class PuzzleGameCoordinator:
             "game_state": state_data
         }
 
-    async def spell_word(self) -> dict[str, Any]:
-        """Spell out the current word letter by letter."""
+    async def start_spelling_mode(self) -> dict[str, Any]:
+        """Enter spelling mode - user will spell their answer letter by letter."""
         game = self.storage.get_current_game()
         if not game:
             return {
@@ -409,22 +409,154 @@ class PuzzleGameCoordinator:
                 "game_state": None
             }
 
-        puzzle = game.get("puzzle", {})
-        words = puzzle.get("words", [])
-        current_index = game.get("current_word_index", 0)
-
-        if current_index < len(words):
-            word = words[current_index]
-            # Spell it out with pauses: "C. A. T."
-            spelled = ". ".join(letter.upper() for letter in word) + "."
-            message = f"The word is spelled: {spelled}"
-        else:
-            message = "No word to spell."
-
+        # Initialize spelling buffer
+        game["spelling_mode"] = True
+        game["spelling_buffer"] = []
+        message = "Spelling mode. Say each letter, then say done when finished."
         game["last_message"] = message
-        await self.storage.update_game(game["id"], {"last_message": message})
+
+        await self.storage.update_game(game["id"], {
+            "spelling_mode": True,
+            "spelling_buffer": [],
+            "last_message": message
+        })
 
         state_data = self.game_manager.get_game_state_dict(game)
+        state_data["spelling_mode"] = True
+        state_data["spelling_buffer"] = []
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
+        self._update_sensor(state_data)
+
+        return {
+            "success": True,
+            "message": message,
+            "game_state": state_data
+        }
+
+    async def add_spelling_letter(self, letter: str) -> dict[str, Any]:
+        """Add a letter to the spelling buffer."""
+        game = self.storage.get_current_game()
+        if not game:
+            return {
+                "success": False,
+                "message": "No active game.",
+                "game_state": None
+            }
+
+        if not game.get("spelling_mode"):
+            return {
+                "success": False,
+                "message": "Not in spelling mode.",
+                "game_state": None
+            }
+
+        # Get current buffer
+        buffer = game.get("spelling_buffer", [])
+        buffer.append(letter.upper())
+
+        current_word = "".join(buffer)
+        message = f"Got {letter.upper()}. So far: {current_word}"
+        game["spelling_buffer"] = buffer
+        game["last_message"] = message
+
+        await self.storage.update_game(game["id"], {
+            "spelling_buffer": buffer,
+            "last_message": message
+        })
+
+        state_data = self.game_manager.get_game_state_dict(game)
+        state_data["spelling_mode"] = True
+        state_data["spelling_buffer"] = buffer
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
+        self._update_sensor(state_data)
+
+        return {
+            "success": True,
+            "message": message,
+            "game_state": state_data
+        }
+
+    async def finish_spelling(self) -> dict[str, Any]:
+        """Finish spelling mode and submit the spelled word as an answer."""
+        game = self.storage.get_current_game()
+        if not game:
+            return {
+                "success": False,
+                "message": "No active game.",
+                "game_state": None
+            }
+
+        if not game.get("spelling_mode"):
+            return {
+                "success": False,
+                "message": "Not in spelling mode.",
+                "game_state": None
+            }
+
+        # Get the spelled word
+        buffer = game.get("spelling_buffer", [])
+        spelled_word = "".join(buffer)
+
+        # Clear spelling mode
+        game["spelling_mode"] = False
+        game["spelling_buffer"] = []
+        await self.storage.update_game(game["id"], {
+            "spelling_mode": False,
+            "spelling_buffer": []
+        })
+
+        if not spelled_word:
+            message = "No letters spelled. Exiting spelling mode."
+            game["last_message"] = message
+            await self.storage.update_game(game["id"], {"last_message": message})
+
+            state_data = self.game_manager.get_game_state_dict(game)
+            state_data["spelling_mode"] = False
+            state_data["spelling_buffer"] = []
+            state_data["session_active"] = self._session_active
+            state_data["active_satellite"] = self._active_satellite
+            state_data["view_assist_device"] = self._view_assist_device
+            self._update_sensor(state_data)
+
+            return {
+                "success": False,
+                "message": message,
+                "game_state": state_data
+            }
+
+        # Submit the spelled word as an answer
+        return await self.submit_answer(spelled_word)
+
+    async def cancel_spelling(self) -> dict[str, Any]:
+        """Cancel spelling mode without submitting."""
+        game = self.storage.get_current_game()
+        if not game:
+            return {
+                "success": False,
+                "message": "No active game.",
+                "game_state": None
+            }
+
+        game["spelling_mode"] = False
+        game["spelling_buffer"] = []
+        message = "Spelling cancelled."
+        game["last_message"] = message
+
+        await self.storage.update_game(game["id"], {
+            "spelling_mode": False,
+            "spelling_buffer": [],
+            "last_message": message
+        })
+
+        state_data = self.game_manager.get_game_state_dict(game)
+        state_data["spelling_mode"] = False
+        state_data["spelling_buffer"] = []
         # Preserve session state
         state_data["session_active"] = self._session_active
         state_data["active_satellite"] = self._active_satellite

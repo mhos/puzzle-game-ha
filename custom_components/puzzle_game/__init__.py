@@ -24,7 +24,10 @@ from .const import (
     SERVICE_REVEAL_LETTER,
     SERVICE_SKIP_WORD,
     SERVICE_REPEAT_CLUE,
-    SERVICE_SPELL_WORD,
+    SERVICE_START_SPELLING,
+    SERVICE_ADD_LETTER,
+    SERVICE_FINISH_SPELLING,
+    SERVICE_CANCEL_SPELLING,
     SERVICE_GIVE_UP,
     SERVICE_SET_SESSION,
 )
@@ -59,6 +62,12 @@ SERVICE_SET_SESSION_SCHEMA = vol.Schema(
         vol.Required("active"): cv.boolean,
         vol.Optional("satellite"): cv.entity_id,
         vol.Optional("view_assist_device"): cv.entity_id,
+    }
+)
+
+SERVICE_ADD_LETTER_SCHEMA = vol.Schema(
+    {
+        vol.Required("letter"): cv.string,
     }
 )
 
@@ -248,9 +257,34 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
             "message": result["message"],
         }
 
-    async def handle_spell_word(call: ServiceCall) -> ServiceResponse:
-        """Handle spell word service."""
-        result = await coordinator.spell_word()
+    async def handle_start_spelling(call: ServiceCall) -> ServiceResponse:
+        """Handle start spelling mode service."""
+        result = await coordinator.start_spelling_mode()
+        return {
+            "success": result["success"],
+            "message": result["message"],
+        }
+
+    async def handle_add_letter(call: ServiceCall) -> ServiceResponse:
+        """Handle add letter service."""
+        letter = call.data.get("letter", "")
+        result = await coordinator.add_spelling_letter(letter)
+        return {
+            "success": result["success"],
+            "message": result["message"],
+        }
+
+    async def handle_finish_spelling(call: ServiceCall) -> ServiceResponse:
+        """Handle finish spelling service."""
+        result = await coordinator.finish_spelling()
+        return {
+            "success": result["success"],
+            "message": result["message"],
+        }
+
+    async def handle_cancel_spelling(call: ServiceCall) -> ServiceResponse:
+        """Handle cancel spelling service."""
+        result = await coordinator.cancel_spelling()
         return {
             "success": result["success"],
             "message": result["message"],
@@ -317,8 +351,30 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
 
     hass.services.async_register(
         DOMAIN,
-        SERVICE_SPELL_WORD,
-        handle_spell_word,
+        SERVICE_START_SPELLING,
+        handle_start_spelling,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ADD_LETTER,
+        handle_add_letter,
+        schema=SERVICE_ADD_LETTER_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_FINISH_SPELLING,
+        handle_finish_spelling,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CANCEL_SPELLING,
+        handle_cancel_spelling,
         supports_response=SupportsResponse.OPTIONAL,
     )
 

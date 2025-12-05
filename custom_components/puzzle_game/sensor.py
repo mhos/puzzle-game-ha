@@ -27,6 +27,8 @@ from .const import (
     ATTR_SESSION_ACTIVE,
     ATTR_ACTIVE_SATELLITE,
     ATTR_VIEW_ASSIST_DEVICE,
+    ATTR_SPELLING_MODE,
+    ATTR_SPELLING_BUFFER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,6 +96,8 @@ class PuzzleGameSensor(SensorEntity):
             ATTR_SESSION_ACTIVE: self._state_data.get(ATTR_SESSION_ACTIVE, False),
             ATTR_ACTIVE_SATELLITE: self._state_data.get(ATTR_ACTIVE_SATELLITE),
             ATTR_VIEW_ASSIST_DEVICE: self._state_data.get(ATTR_VIEW_ASSIST_DEVICE),
+            ATTR_SPELLING_MODE: self._state_data.get(ATTR_SPELLING_MODE, False),
+            ATTR_SPELLING_BUFFER: self._state_data.get(ATTR_SPELLING_BUFFER, []),
         }
 
     @property

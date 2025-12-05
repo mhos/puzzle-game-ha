@@ -293,13 +293,69 @@ action:
                       preannounce: false
 
               #############################################
-              # SPELL WORD
+              # START SPELLING MODE
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ 'spell' in spoken_text }}"
+                    value_template: "{{ 'spell' in spoken_text and state_attr('sensor.puzzle_game', 'spelling_mode') != true }}"
                 sequence:
-                  - service: puzzle_game.spell_word
+                  - service: puzzle_game.start_spelling
+                  - delay:
+                      milliseconds: 500
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ satellite_entity }}"
+                    data:
+                      message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
+                      preannounce: false
+
+              #############################################
+              # SPELLING MODE - DONE
+              #############################################
+              - conditions:
+                  - condition: template
+                    value_template: "{{ state_attr('sensor.puzzle_game', 'spelling_mode') == true and ('done' in spoken_text or 'submit' in spoken_text or 'finished' in spoken_text) }}"
+                sequence:
+                  - service: puzzle_game.finish_spelling
+                  - delay:
+                      milliseconds: 500
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ satellite_entity }}"
+                    data:
+                      message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
+                      preannounce: false
+
+              #############################################
+              # SPELLING MODE - CANCEL
+              #############################################
+              - conditions:
+                  - condition: template
+                    value_template: "{{ state_attr('sensor.puzzle_game', 'spelling_mode') == true and ('cancel' in spoken_text or 'nevermind' in spoken_text or 'never mind' in spoken_text) }}"
+                sequence:
+                  - service: puzzle_game.cancel_spelling
+                  - delay:
+                      milliseconds: 500
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ satellite_entity }}"
+                    data:
+                      message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
+                      preannounce: false
+
+              #############################################
+              # SPELLING MODE - ADD LETTER
+              #############################################
+              - conditions:
+                  - condition: template
+                    value_template: "{{ state_attr('sensor.puzzle_game', 'spelling_mode') == true and spoken_text | length == 1 and spoken_text | lower in 'abcdefghijklmnopqrstuvwxyz' }}"
+                sequence:
+                  - service: puzzle_game.add_letter
+                    data:
+                      letter: "{{ spoken_text }}"
                   - delay:
                       milliseconds: 500
                   - service: assist_satellite.announce
