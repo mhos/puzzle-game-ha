@@ -221,7 +221,8 @@ action:
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
         sequence:
           - variables:
-              spoken_text: "{{ trigger.event.data.text | lower | trim }}"
+              # Clean up speech: lowercase, trim whitespace, remove trailing punctuation
+              spoken_text: "{{ trigger.event.data.text | lower | trim | regex_replace('[.!?,]+$', '') | trim }}"
 
           - choose:
               #############################################
@@ -229,7 +230,7 @@ action:
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ spoken_text in ['reveal', 'reveal a letter', 'hint', 'show me a letter', 'letter'] }}"
+                    value_template: "{{ 'reveal' in spoken_text or 'hint' in spoken_text or spoken_text == 'letter' }}"
                 sequence:
                   - service: puzzle_game.reveal_letter
                   - delay:
@@ -247,7 +248,7 @@ action:
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ spoken_text in ['skip', 'pass', 'next', 'next word'] }}"
+                    value_template: "{{ 'skip' in spoken_text or 'pass' in spoken_text or 'next' in spoken_text }}"
                 sequence:
                   - service: puzzle_game.skip_word
                   - delay:
@@ -265,7 +266,7 @@ action:
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ spoken_text in ['repeat', 'say that again', 'what is the clue', 'repeat the clue', 'clue'] }}"
+                    value_template: "{{ 'repeat' in spoken_text or 'clue' in spoken_text or 'say that again' in spoken_text }}"
                 sequence:
                   - service: puzzle_game.repeat_clue
                   - delay:
@@ -283,7 +284,7 @@ action:
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ spoken_text in ['pause', 'pause the game', 'stop', 'exit', 'stop the game'] }}"
+                    value_template: "{{ 'pause' in spoken_text or spoken_text in ['stop', 'exit'] }}"
                 sequence:
                   - service: puzzle_game.set_session
                     data:
@@ -308,7 +309,7 @@ action:
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ spoken_text in ['give up', 'i give up', 'end the game', 'end game', 'quit'] }}"
+                    value_template: "{{ 'give up' in spoken_text or 'end game' in spoken_text or 'end the game' in spoken_text or spoken_text == 'quit' }}"
                 sequence:
                   - service: puzzle_game.set_session
                     data:

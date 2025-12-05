@@ -287,6 +287,10 @@ class PuzzleGameCoordinator:
         # Refresh game from storage (it may have been updated)
         game = self.storage.get_game(game["id"])
         state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
         return {
@@ -319,6 +323,10 @@ class PuzzleGameCoordinator:
 
         game = self.storage.get_game(game["id"])
         state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
         return {
@@ -351,6 +359,10 @@ class PuzzleGameCoordinator:
 
         game = self.storage.get_game(game["id"])
         state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
         return {
@@ -375,6 +387,10 @@ class PuzzleGameCoordinator:
         await self.storage.update_game(game["id"], {"last_message": clue})
 
         state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
         return {
@@ -400,6 +416,10 @@ class PuzzleGameCoordinator:
 
         game = self.storage.get_game(game["id"])
         state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
         return {
