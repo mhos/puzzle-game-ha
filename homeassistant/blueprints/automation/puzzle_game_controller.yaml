@@ -7,16 +7,30 @@ blueprint:
   input:
     satellite:
       name: Voice Satellite
-      description: "The assist satellite to use for this game instance."
+      description: "The assist satellite entity (e.g., assist_satellite.vaca_xxx)"
       selector:
         entity:
           filter:
             - domain: assist_satellite
+    wake_button:
+      name: Wake Button
+      description: "The button to trigger listening (e.g., button.vaca_xxx_wake)"
+      selector:
+        entity:
+          filter:
+            - domain: button
+    stt_sensor:
+      name: STT Sensor
+      description: "The speech-to-text sensor (e.g., sensor.vaca_xxx_stt)"
+      selector:
+        entity:
+          filter:
+            - domain: sensor
 
 mode: restart
 
 trigger:
-  # Game start commands - these are the ONLY conversation triggers
+  # Game start commands
   - platform: conversation
     command:
       - "start puzzle game"
@@ -35,20 +49,20 @@ trigger:
       - "continue [the] [puzzle] game"
     id: "continue"
 
-  # Event trigger for continuous question loop
-  - platform: event
-    event_type: puzzle_game_ask
-    id: ask_question
+  # STT sensor changed - user spoke something
+  - platform: state
+    entity_id: !input stt_sensor
+    id: stt_changed
 
 variables:
   satellite_entity: !input satellite
+  wake_button: !input wake_button
+  stt_sensor: !input stt_sensor
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
-    {% elif trigger.platform == 'event' %}
-      {{ trigger.event.data.view_assist_device | default('none') }}
     {% else %}
-      none
+      {{ state_attr('sensor.puzzle_game', 'view_assist_device') | default('none') }}
     {% endif %}
 
 action:
@@ -83,12 +97,24 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
-          # Fire event to start the question loop
-          - event: puzzle_game_ask
-            event_data:
-              satellite: "{{ satellite_entity }}"
-              view_assist_device: "{{ view_assist_device }}"
-              first_question: true
+          - delay:
+              seconds: 1
+          # Announce the first clue
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ satellite_entity }}"
+            data:
+              message: "{{ state_attr('sensor.puzzle_game', 'clue') }}. What's your answer?"
+              preannounce: false
+          # Wait for announcement to finish, then trigger listening
+          - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+            timeout: "00:00:30"
+          - delay:
+              milliseconds: 500
+          - service: button.press
+            target:
+              entity_id: "{{ wake_button }}"
 
       #############################################
       # START BONUS GAME
@@ -120,12 +146,24 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
-          # Fire event to start the question loop
-          - event: puzzle_game_ask
-            event_data:
-              satellite: "{{ satellite_entity }}"
-              view_assist_device: "{{ view_assist_device }}"
-              first_question: true
+          - delay:
+              seconds: 1
+          # Announce the first clue
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ satellite_entity }}"
+            data:
+              message: "{{ state_attr('sensor.puzzle_game', 'clue') }}. What's your answer?"
+              preannounce: false
+          # Wait for announcement to finish, then trigger listening
+          - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+            timeout: "00:00:30"
+          - delay:
+              milliseconds: 500
+          - service: button.press
+            target:
+              entity_id: "{{ wake_button }}"
 
       #############################################
       # CONTINUE/RESUME GAME
@@ -165,90 +203,48 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
-          # Fire event to resume the question loop
-          - event: puzzle_game_ask
-            event_data:
-              satellite: "{{ satellite_entity }}"
-              view_assist_device: "{{ view_assist_device }}"
-              first_question: false
+          # Announce welcome back
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ satellite_entity }}"
+            data:
+              message: "Welcome back! {{ state_attr('sensor.puzzle_game', 'clue') }}"
+              preannounce: false
+          # Wait for announcement to finish, then trigger listening
+          - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+            timeout: "00:00:30"
+          - delay:
+              milliseconds: 500
+          - service: button.press
+            target:
+              entity_id: "{{ wake_button }}"
 
       #############################################
-      # ASK QUESTION LOOP (event-driven)
+      # PROCESS SPEECH (STT sensor changed)
       #############################################
       - conditions:
           - condition: trigger
-            id: ask_question
-          - condition: template
-            value_template: "{{ trigger.event.data.satellite == satellite_entity }}"
+            id: stt_changed
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
+          - condition: template
+            value_template: "{{ trigger.to_state.state | length > 0 }}"
+          - condition: template
+            value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
         sequence:
-          # Announce the clue for first question or after correct answer
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ trigger.event.data.first_question == true }}"
-                sequence:
-                  - service: assist_satellite.announce
-                    continue_on_error: true
-                    target:
-                      entity_id: "{{ satellite_entity }}"
-                    data:
-                      message: "{{ state_attr('sensor.puzzle_game', 'clue') }}"
-                      preannounce: false
-                  - delay:
-                      seconds: 1
+          - variables:
+              spoken_text: "{{ trigger.to_state.state | lower | trim }}"
 
-          # Ask for player input using ask_question
-          - action: assist_satellite.ask_question
-            target:
-              entity_id: "{{ satellite_entity }}"
-            data:
-              question: "What's your answer?"
-              preannounce: false
-              answers:
-                - id: reveal
-                  sentences:
-                    - "reveal"
-                    - "reveal [a] letter"
-                    - "hint"
-                    - "show [me] [a] letter"
-                - id: skip
-                  sentences:
-                    - "skip"
-                    - "pass"
-                    - "next"
-                    - "next word"
-                - id: repeat
-                  sentences:
-                    - "repeat"
-                    - "say [that] again"
-                    - "what's the clue"
-                    - "repeat [the] clue"
-                - id: pause
-                  sentences:
-                    - "pause"
-                    - "pause [the] game"
-                    - "stop"
-                    - "exit"
-                - id: giveup
-                  sentences:
-                    - "give up"
-                    - "I give up"
-                    - "end [the] game"
-            response_variable: player_response
-            continue_on_error: true
-
-          # Check if we got a response
           - choose:
               #############################################
               # REVEAL LETTER
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.id == 'reveal' }}"
+                    value_template: "{{ spoken_text in ['reveal', 'reveal a letter', 'hint', 'show me a letter', 'letter'] }}"
                 sequence:
                   - service: puzzle_game.reveal_letter
                   - delay:
@@ -260,21 +256,13 @@ action:
                     data:
                       message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
                       preannounce: false
-                  - delay:
-                      seconds: 1
-                  # Continue the loop
-                  - event: puzzle_game_ask
-                    event_data:
-                      satellite: "{{ satellite_entity }}"
-                      view_assist_device: "{{ view_assist_device }}"
-                      first_question: false
 
               #############################################
               # SKIP WORD
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.id == 'skip' }}"
+                    value_template: "{{ spoken_text in ['skip', 'pass', 'next', 'next word'] }}"
                 sequence:
                   - service: puzzle_game.skip_word
                   - delay:
@@ -286,21 +274,13 @@ action:
                     data:
                       message: "Skipped. {{ state_attr('sensor.puzzle_game', 'clue') }}"
                       preannounce: false
-                  - delay:
-                      seconds: 1
-                  # Continue the loop
-                  - event: puzzle_game_ask
-                    event_data:
-                      satellite: "{{ satellite_entity }}"
-                      view_assist_device: "{{ view_assist_device }}"
-                      first_question: false
 
               #############################################
               # REPEAT CLUE
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.id == 'repeat' }}"
+                    value_template: "{{ spoken_text in ['repeat', 'say that again', 'what is the clue', 'repeat the clue', 'clue'] }}"
                 sequence:
                   - service: puzzle_game.repeat_clue
                   - delay:
@@ -312,21 +292,13 @@ action:
                     data:
                       message: "{{ state_attr('sensor.puzzle_game', 'clue') }}"
                       preannounce: false
-                  - delay:
-                      seconds: 1
-                  # Continue the loop
-                  - event: puzzle_game_ask
-                    event_data:
-                      satellite: "{{ satellite_entity }}"
-                      view_assist_device: "{{ view_assist_device }}"
-                      first_question: false
 
               #############################################
               # PAUSE GAME
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.id == 'pause' }}"
+                    value_template: "{{ spoken_text in ['pause', 'pause the game', 'stop', 'exit', 'stop the game'] }}"
                 sequence:
                   - service: puzzle_game.set_session
                     data:
@@ -344,14 +316,14 @@ action:
                       entity_id: "{{ view_assist_device }}"
                     data:
                       assist_prompt: ""
-                  # Don't continue the loop - game is paused
+                  - stop: "Game paused"
 
               #############################################
               # GIVE UP
               #############################################
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.id == 'giveup' }}"
+                    value_template: "{{ spoken_text in ['give up', 'i give up', 'end the game', 'end game', 'quit'] }}"
                 sequence:
                   - service: puzzle_game.set_session
                     data:
@@ -372,62 +344,61 @@ action:
                       entity_id: "{{ view_assist_device }}"
                     data:
                       assist_prompt: ""
-                  # Don't continue the loop - game ended
+                  - stop: "Game ended"
 
               #############################################
-              # ANSWER ATTEMPT (anything else said)
+              # ANSWER ATTEMPT (anything else)
               #############################################
+            default:
+              - service: puzzle_game.submit_answer
+                data:
+                  answer: "{{ spoken_text }}"
+              - delay:
+                  milliseconds: 500
+              - service: assist_satellite.announce
+                continue_on_error: true
+                target:
+                  entity_id: "{{ satellite_entity }}"
+                data:
+                  message: "{{ state_attr('sensor.puzzle_game', 'last_message') | default('Try again.', true) }}"
+                  preannounce: false
+
+          # After processing, check if game is still active
+          - choose:
               - conditions:
                   - condition: template
-                    value_template: "{{ player_response is defined and player_response.sentence is defined and player_response.sentence | length > 0 }}"
+                    value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true and state_attr('sensor.puzzle_game', 'session_active') == true }}"
                 sequence:
-                  - service: puzzle_game.submit_answer
-                    data:
-                      answer: "{{ player_response.sentence }}"
-                  - delay:
-                      milliseconds: 500
-                  - service: assist_satellite.announce
-                    continue_on_error: true
-                    target:
-                      entity_id: "{{ satellite_entity }}"
-                    data:
-                      message: "{{ state_attr('sensor.puzzle_game', 'last_message') | default('Try again.', true) }}"
-                      preannounce: false
-                  - delay:
-                      seconds: 1
-                  # Check if game is still active before continuing
+                  # If correct answer, announce next clue
                   - choose:
                       - conditions:
                           - condition: template
-                            value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
+                            value_template: "{{ (state_attr('sensor.puzzle_game', 'last_message') | default('', true)).startswith('Correct') }}"
                         sequence:
-                          # Continue the loop - announce next clue if word was correct
-                          - event: puzzle_game_ask
-                            event_data:
-                              satellite: "{{ satellite_entity }}"
-                              view_assist_device: "{{ view_assist_device }}"
-                              first_question: "{{ (state_attr('sensor.puzzle_game', 'last_message') | default('', true)).startswith('Correct') }}"
-                    default:
-                      # Game completed
-                      - service: view_assist.set_state
-                        continue_on_error: true
-                        target:
-                          entity_id: "{{ view_assist_device }}"
-                        data:
-                          assist_prompt: ""
-
-            # Default - no response or timeout
+                          - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+                            timeout: "00:00:30"
+                          - delay:
+                              milliseconds: 500
+                          - service: assist_satellite.announce
+                            continue_on_error: true
+                            target:
+                              entity_id: "{{ satellite_entity }}"
+                            data:
+                              message: "{{ state_attr('sensor.puzzle_game', 'clue') }}"
+                              preannounce: false
+                  # Wait for any announcement to finish, then listen again
+                  - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+                    timeout: "00:00:30"
+                  - delay:
+                      milliseconds: 500
+                  - service: button.press
+                    target:
+                      entity_id: "{{ wake_button }}"
             default:
-              - choose:
-                  # If game is still active, keep asking
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true and state_attr('sensor.puzzle_game', 'is_active') == true }}"
-                    sequence:
-                      - delay:
-                          seconds: 1
-                      - event: puzzle_game_ask
-                        event_data:
-                          satellite: "{{ satellite_entity }}"
-                          view_assist_device: "{{ view_assist_device }}"
-                          first_question: false
+              # Game completed
+              - service: view_assist.set_state
+                continue_on_error: true
+                target:
+                  entity_id: "{{ view_assist_device }}"
+                data:
+                  assist_prompt: ""
