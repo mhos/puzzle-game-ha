@@ -12,12 +12,6 @@ blueprint:
         entity:
           filter:
             - domain: assist_satellite
-    home_path:
-      name: Home Dashboard Path
-      description: "Path to navigate back to after game ends (e.g., /dashboard-viewassist). Leave empty to stay on game screen."
-      default: "/dashboard-viewassist"
-      selector:
-        text:
 
 mode: queued
 max: 5
@@ -49,7 +43,6 @@ trigger:
 
 variables:
   satellite_entity: !input satellite
-  home_dashboard_path: !input home_path
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
@@ -427,15 +420,11 @@ action:
                   # Return to home screen after a short delay
                   - delay:
                       seconds: 10
-                  - if:
-                      - condition: template
-                        value_template: "{{ home_dashboard_path | length > 0 }}"
-                    then:
-                      - service: view_assist.navigate
-                        continue_on_error: true
-                        data:
-                          device: "{{ view_assist_device }}"
-                          path: "{{ home_dashboard_path }}"
+                  - service: view_assist.navigate
+                    continue_on_error: true
+                    data:
+                      device: "{{ view_assist_device }}"
+                      path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0') }}"
                   - stop: "Game ended"
 
               #############################################
@@ -504,12 +493,8 @@ action:
                   assist_prompt: ""
               - delay:
                   seconds: 30
-              - if:
-                  - condition: template
-                    value_template: "{{ home_dashboard_path | length > 0 }}"
-                then:
-                  - service: view_assist.navigate
-                    continue_on_error: true
-                    data:
-                      device: "{{ view_assist_device }}"
-                      path: "{{ home_dashboard_path }}"
+              - service: view_assist.navigate
+                continue_on_error: true
+                data:
+                  device: "{{ view_assist_device }}"
+                  path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0') }}"
