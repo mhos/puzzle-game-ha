@@ -37,6 +37,7 @@ ATTR_IS_ACTIVE = "is_active"
 ATTR_LAST_MESSAGE = "last_message"
 ATTR_THEME_REVEALED = "theme_revealed"
 ATTR_SESSION_ACTIVE = "session_active"
+ATTR_ACTIVE_SATELLITE = "active_satellite"
 
 # Config
 CONF_CONVERSATION_AGENT = "conversation_agent"

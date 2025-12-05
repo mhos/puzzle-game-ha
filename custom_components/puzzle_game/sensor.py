@@ -25,6 +25,7 @@ from .const import (
     ATTR_LAST_MESSAGE,
     ATTR_THEME_REVEALED,
     ATTR_SESSION_ACTIVE,
+    ATTR_ACTIVE_SATELLITE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class PuzzleGameSensor(SensorEntity):
             ATTR_LAST_MESSAGE: self._state_data.get(ATTR_LAST_MESSAGE),
             ATTR_THEME_REVEALED: self._state_data.get(ATTR_THEME_REVEALED),
             ATTR_SESSION_ACTIVE: self._state_data.get(ATTR_SESSION_ACTIVE, False),
+            ATTR_ACTIVE_SATELLITE: self._state_data.get(ATTR_ACTIVE_SATELLITE),
         }
 
     @property

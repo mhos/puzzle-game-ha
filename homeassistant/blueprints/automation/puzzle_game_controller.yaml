@@ -4,14 +4,7 @@ blueprint:
   domain: automation
   author: mhos
   source_url: https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
-  input:
-    satellite:
-      name: Voice Satellite
-      description: "The assist satellite entity to use for voice interaction"
-      selector:
-        entity:
-          filter:
-            - domain: assist_satellite
+  input: {}
 
 mode: restart
 
@@ -77,16 +70,25 @@ trigger:
       - "[is] [it] {answer}"
     id: answer
 
-  # Continuous listening trigger - when satellite finishes responding
-  - platform: state
-    entity_id: !input satellite
-    from: responding
-    to: idle
+  # Continuous listening trigger - fires on any state change, filtered in conditions
+  - platform: event
+    event_type: state_changed
     id: continue_listening
 
 variables:
-  satellite_entity: !input satellite
-  view_assist_device: "{{ view_assist_entity(trigger.device_id) if trigger.device_id is defined else none }}"
+  # Get satellite from trigger or from stored active_satellite
+  satellite_entity: >-
+    {% if trigger.platform == 'conversation' %}
+      {{ trigger.satellite_id }}
+    {% else %}
+      {{ state_attr('sensor.puzzle_game', 'active_satellite') }}
+    {% endif %}
+  view_assist_device: >-
+    {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
+      {{ view_assist_entity(trigger.device_id) }}
+    {% else %}
+      none
+    {% endif %}
 
 action:
   - choose:
@@ -103,11 +105,13 @@ action:
           - delay:
               seconds: 2
           - service: view_assist.navigate
+            continue_on_error: true
             data:
               device: "{{ view_assist_device }}"
               path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
+            continue_on_error: true
             target:
               entity_id: "{{ view_assist_device }}"
             data:
@@ -115,6 +119,7 @@ action:
           - service: puzzle_game.set_session
             data:
               active: true
+              satellite: "{{ satellite_entity }}"
           - delay:
               seconds: 1
           - service: assist_satellite.announce
@@ -138,11 +143,13 @@ action:
           - delay:
               seconds: 2
           - service: view_assist.navigate
+            continue_on_error: true
             data:
               device: "{{ view_assist_device }}"
               path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
+            continue_on_error: true
             target:
               entity_id: "{{ view_assist_device }}"
             data:
@@ -150,6 +157,7 @@ action:
           - service: puzzle_game.set_session
             data:
               active: true
+              satellite: "{{ satellite_entity }}"
           - delay:
               seconds: 1
           - service: assist_satellite.announce
@@ -181,11 +189,13 @@ action:
                       preannounce: false
                   - stop: "No active game"
           - service: view_assist.navigate
+            continue_on_error: true
             data:
               device: "{{ view_assist_device }}"
               path: "/puzzle-game"
               revert_timeout: 0
           - service: view_assist.set_state
+            continue_on_error: true
             target:
               entity_id: "{{ view_assist_device }}"
             data:
@@ -193,6 +203,7 @@ action:
           - service: puzzle_game.set_session
             data:
               active: true
+              satellite: "{{ satellite_entity }}"
           - service: assist_satellite.announce
             continue_on_error: true
             target:
@@ -211,6 +222,12 @@ action:
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
+          # Check that this event is for the active satellite
+          - condition: template
+            value_template: "{{ trigger.event.data.entity_id == state_attr('sensor.puzzle_game', 'active_satellite') }}"
+          # Check that it went from responding to idle
+          - condition: template
+            value_template: "{{ trigger.event.data.old_state.state == 'responding' and trigger.event.data.new_state.state == 'idle' }}"
         sequence:
           - delay:
               milliseconds: 500

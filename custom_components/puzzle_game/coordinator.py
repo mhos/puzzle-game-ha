@@ -31,6 +31,7 @@ class PuzzleGameCoordinator:
         self.conversation_agent = conversation_agent
         self._sensor = None
         self._session_active = False
+        self._active_satellite = None
 
     def register_sensor(self, sensor) -> None:
         """Register the sensor entity."""
@@ -47,9 +48,19 @@ class PuzzleGameCoordinator:
         """Return whether a voice session is currently active."""
         return self._session_active
 
-    def set_session_active(self, active: bool) -> None:
-        """Set the voice session active state."""
+    @property
+    def active_satellite(self) -> str | None:
+        """Return the active satellite entity."""
+        return self._active_satellite
+
+    def set_session_active(self, active: bool, satellite: str | None = None) -> None:
+        """Set the voice session active state and optionally the satellite."""
         self._session_active = active
+        if satellite is not None:
+            self._active_satellite = satellite
+        elif not active:
+            # Clear satellite when session ends
+            self._active_satellite = None
         # Trigger a sensor update
         game = self.storage.get_current_game()
         if game:
@@ -57,6 +68,7 @@ class PuzzleGameCoordinator:
         else:
             state_data = self._get_empty_state()
         state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
         self._update_sensor(state_data)
 
     def _get_empty_state(self) -> dict[str, Any]:
@@ -75,6 +87,7 @@ class PuzzleGameCoordinator:
             "last_message": None,
             "theme_revealed": None,
             "session_active": self._session_active,
+            "active_satellite": self._active_satellite,
         }
 
     async def async_refresh_state(self) -> None:
@@ -85,6 +98,7 @@ class PuzzleGameCoordinator:
         else:
             state_data = self._get_empty_state()
         state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
         self._update_sensor(state_data)
 
     async def start_game(self, bonus: bool = False) -> dict[str, Any]:
