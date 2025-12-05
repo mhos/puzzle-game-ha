@@ -7,25 +7,11 @@ blueprint:
   input:
     satellite:
       name: Voice Satellite
-      description: "The assist satellite entity (e.g., assist_satellite.vaca_xxx)"
+      description: "The assist satellite entity (e.g., assist_satellite.vaca_xxx). Wake button and STT sensor are derived automatically from naming convention."
       selector:
         entity:
           filter:
             - domain: assist_satellite
-    wake_button:
-      name: Wake Button
-      description: "The button to trigger listening (e.g., button.vaca_xxx_wake)"
-      selector:
-        entity:
-          filter:
-            - domain: button
-    stt_sensor:
-      name: STT Sensor
-      description: "The speech-to-text sensor (e.g., sensor.vaca_xxx_stt)"
-      selector:
-        entity:
-          filter:
-            - domain: sensor
 
 mode: restart
 
@@ -49,15 +35,17 @@ trigger:
       - "continue [the] [puzzle] game"
     id: "continue"
 
-  # STT sensor changed - user spoke something
-  - platform: state
-    entity_id: !input stt_sensor
+  # Custom event fired by coordinator when STT sensor changes during active session
+  - platform: event
+    event_type: puzzle_game_speech
     id: stt_changed
 
 variables:
   satellite_entity: !input satellite
-  wake_button: !input wake_button
-  stt_sensor: !input stt_sensor
+  # Derive device name from satellite entity (e.g., assist_satellite.vaca_lenovo_xxx -> vaca_lenovo_xxx)
+  device_name: "{{ satellite_entity.split('.')[1] }}"
+  # Build wake button entity ID from naming convention
+  wake_button: "button.{{ device_name }}_wake"
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
@@ -97,6 +85,7 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
+              view_assist_device: "{{ view_assist_device }}"
           - delay:
               seconds: 1
           # Announce the first clue
@@ -146,6 +135,7 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
+              view_assist_device: "{{ view_assist_device }}"
           - delay:
               seconds: 1
           # Announce the first clue
@@ -203,6 +193,7 @@ action:
             data:
               active: true
               satellite: "{{ satellite_entity }}"
+              view_assist_device: "{{ view_assist_device }}"
           # Announce welcome back
           - service: assist_satellite.announce
             continue_on_error: true
@@ -221,22 +212,19 @@ action:
               entity_id: "{{ wake_button }}"
 
       #############################################
-      # PROCESS SPEECH (STT sensor changed)
+      # PROCESS SPEECH (custom event from coordinator)
       #############################################
       - conditions:
           - condition: trigger
             id: stt_changed
+          # Game must be active
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
-          - condition: template
-            value_template: "{{ trigger.to_state.state | length > 0 }}"
-          - condition: template
-            value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
         sequence:
           - variables:
-              spoken_text: "{{ trigger.to_state.state | lower | trim }}"
+              spoken_text: "{{ trigger.event.data.new_state.state | lower | trim }}"
 
           - choose:
               #############################################

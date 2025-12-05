@@ -5,7 +5,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, callback, Event
+from homeassistant.helpers.event import async_track_state_change_event
 
 from .const import DOMAIN, CONF_CONVERSATION_AGENT
 from .storage import PuzzleGameStorage
@@ -32,6 +33,8 @@ class PuzzleGameCoordinator:
         self._sensor = None
         self._session_active = False
         self._active_satellite = None
+        self._stt_unsub = None
+        self._view_assist_device = None
 
     def register_sensor(self, sensor) -> None:
         """Register the sensor entity."""
@@ -53,14 +56,22 @@ class PuzzleGameCoordinator:
         """Return the active satellite entity."""
         return self._active_satellite
 
-    def set_session_active(self, active: bool, satellite: str | None = None) -> None:
+    def set_session_active(self, active: bool, satellite: str | None = None, view_assist_device: str | None = None) -> None:
         """Set the voice session active state and optionally the satellite."""
         self._session_active = active
         if satellite is not None:
             self._active_satellite = satellite
-        elif not active:
-            # Clear satellite when session ends
+            # Derive STT sensor from satellite name and start watching
+            device_name = satellite.split('.')[1] if '.' in satellite else satellite
+            stt_sensor = f"sensor.{device_name}_stt"
+            self._start_stt_watch(stt_sensor)
+        if view_assist_device is not None:
+            self._view_assist_device = view_assist_device
+        if not active:
+            # Stop watching STT when session ends
+            self._stop_stt_watch()
             self._active_satellite = None
+            self._view_assist_device = None
         # Trigger a sensor update
         game = self.storage.get_current_game()
         if game:
@@ -69,7 +80,47 @@ class PuzzleGameCoordinator:
             state_data = self._get_empty_state()
         state_data["session_active"] = self._session_active
         state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
+
+    def _start_stt_watch(self, stt_sensor: str) -> None:
+        """Start watching the STT sensor for changes."""
+        # Stop any existing watch first
+        self._stop_stt_watch()
+
+        @callback
+        def _stt_state_changed(event: Event) -> None:
+            """Handle STT sensor state change."""
+            new_state = event.data.get("new_state")
+            old_state = event.data.get("old_state")
+
+            if new_state is None:
+                return
+
+            new_value = new_state.state
+            old_value = old_state.state if old_state else ""
+
+            # Only fire event if there's actual speech content and it changed
+            if new_value and len(new_value) > 0 and new_value != old_value:
+                # Fire custom event for the blueprint to catch
+                self.hass.bus.async_fire("puzzle_game_speech", {
+                    "entity_id": stt_sensor,
+                    "old_state": old_state,
+                    "new_state": new_state,
+                })
+                _LOGGER.debug("Fired puzzle_game_speech event: %s", new_value)
+
+        self._stt_unsub = async_track_state_change_event(
+            self.hass, [stt_sensor], _stt_state_changed
+        )
+        _LOGGER.info("Started watching STT sensor: %s", stt_sensor)
+
+    def _stop_stt_watch(self) -> None:
+        """Stop watching the STT sensor."""
+        if self._stt_unsub:
+            self._stt_unsub()
+            self._stt_unsub = None
+            _LOGGER.info("Stopped watching STT sensor")
 
     def _get_empty_state(self) -> dict[str, Any]:
         """Return empty game state."""
@@ -88,6 +139,7 @@ class PuzzleGameCoordinator:
             "theme_revealed": None,
             "session_active": self._session_active,
             "active_satellite": self._active_satellite,
+            "view_assist_device": self._view_assist_device,
         }
 
     async def async_refresh_state(self) -> None:
@@ -99,6 +151,7 @@ class PuzzleGameCoordinator:
             state_data = self._get_empty_state()
         state_data["session_active"] = self._session_active
         state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
         self._update_sensor(state_data)
 
     async def start_game(self, bonus: bool = False) -> dict[str, Any]:

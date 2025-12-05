@@ -38,6 +38,7 @@ ATTR_LAST_MESSAGE = "last_message"
 ATTR_THEME_REVEALED = "theme_revealed"
 ATTR_SESSION_ACTIVE = "session_active"
 ATTR_ACTIVE_SATELLITE = "active_satellite"
+ATTR_VIEW_ASSIST_DEVICE = "view_assist_device"
 
 # Config
 CONF_CONVERSATION_AGENT = "conversation_agent"

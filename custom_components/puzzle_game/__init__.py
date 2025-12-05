@@ -57,6 +57,7 @@ SERVICE_SET_SESSION_SCHEMA = vol.Schema(
     {
         vol.Required("active"): cv.boolean,
         vol.Optional("satellite"): cv.entity_id,
+        vol.Optional("view_assist_device"): cv.entity_id,
     }
 )
 
@@ -258,11 +259,13 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
         """Handle set session service."""
         active = call.data.get("active", False)
         satellite = call.data.get("satellite")
-        coordinator.set_session_active(active, satellite)
+        view_assist_device = call.data.get("view_assist_device")
+        coordinator.set_session_active(active, satellite, view_assist_device)
         return {
             "success": True,
             "session_active": active,
             "active_satellite": satellite,
+            "view_assist_device": view_assist_device,
         }
 
     # Register services with response support
