@@ -98,9 +98,12 @@ action:
             timeout: "00:00:30"
           - delay:
               milliseconds: 500
-          - service: button.press
+          - service: assist_satellite.start_conversation
             target:
-              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
+              entity_id: "{{ satellite_entity }}"
+            data:
+              start_message: ""
+              extra_system_prompt: "You are in puzzle game mode. The user is playing a word puzzle game. Do NOT respond to their speech - just say OK or stay completely silent. The game automation will handle their answer. Do not try to help, answer questions, or have a conversation."
 
       #############################################
       # START BONUS GAME
@@ -148,9 +151,12 @@ action:
             timeout: "00:00:30"
           - delay:
               milliseconds: 500
-          - service: button.press
+          - service: assist_satellite.start_conversation
             target:
-              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
+              entity_id: "{{ satellite_entity }}"
+            data:
+              start_message: ""
+              extra_system_prompt: "You are in puzzle game mode. The user is playing a word puzzle game. Do NOT respond to their speech - just say OK or stay completely silent. The game automation will handle their answer. Do not try to help, answer questions, or have a conversation."
 
       #############################################
       # CONTINUE/RESUME GAME
@@ -204,9 +210,12 @@ action:
             timeout: "00:00:30"
           - delay:
               milliseconds: 500
-          - service: button.press
+          - service: assist_satellite.start_conversation
             target:
-              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
+              entity_id: "{{ satellite_entity }}"
+            data:
+              start_message: ""
+              extra_system_prompt: "You are in puzzle game mode. The user is playing a word puzzle game. Do NOT respond to their speech - just say OK or stay completely silent. The game automation will handle their answer. Do not try to help, answer questions, or have a conversation."
 
       #############################################
       # PROCESS SPEECH (custom event from coordinator)
@@ -381,13 +390,16 @@ action:
                     timeout: "00:00:30"
                   - delay:
                       milliseconds: 500
-                  - service: button.press
+                  - service: assist_satellite.start_conversation
                     continue_on_error: true
                     target:
-                      entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
+                      entity_id: "{{ satellite_entity }}"
+                    data:
+                      start_message: ""
+                      extra_system_prompt: "You are in puzzle game mode. The user is playing a word puzzle game. Do NOT respond to their speech - just say OK or stay completely silent. The game automation will handle their answer. Do not try to help, answer questions, or have a conversation."
                   - service: system_log.write
                     data:
-                      message: "Puzzle Game: Pressed wake button to continue listening"
+                      message: "Puzzle Game: Started conversation to continue listening"
                       level: info
             default:
               # Game completed
