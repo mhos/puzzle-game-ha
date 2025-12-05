@@ -1,10 +1,17 @@
 blueprint:
   name: Puzzle Game Controller
-  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game', 'Play bonus game', or 'Continue puzzle game'. During gameplay, no wake word needed - just speak your answers, or say 'reveal', 'skip', 'repeat', 'pause', or 'give up'."
+  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game', 'Play bonus game', or 'Continue puzzle game'. During gameplay, no wake word needed - just speak your answers, or say 'reveal', 'skip', 'repeat', 'pause', or 'give up'. NOTE: Create one automation per satellite you want to play on."
   domain: automation
   author: mhos
   source_url: https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
-  input: {}
+  input:
+    satellite:
+      name: Voice Satellite
+      description: "The assist satellite to use for this game instance. Create multiple automations for multiple satellites."
+      selector:
+        entity:
+          filter:
+            - domain: assist_satellite
 
 mode: restart
 
@@ -70,19 +77,15 @@ trigger:
       - "[is] [it] {answer}"
     id: answer
 
-  # Continuous listening trigger - fires on any state change, filtered in conditions
-  - platform: event
-    event_type: state_changed
+  # Continuous listening - watch the configured satellite
+  - platform: state
+    entity_id: !input satellite
+    from: responding
+    to: idle
     id: continue_listening
 
 variables:
-  # Get satellite from trigger or from stored active_satellite
-  satellite_entity: >-
-    {% if trigger.platform == 'conversation' %}
-      {{ trigger.satellite_id }}
-    {% else %}
-      {{ state_attr('sensor.puzzle_game', 'active_satellite') }}
-    {% endif %}
+  satellite_entity: !input satellite
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
@@ -98,6 +101,9 @@ action:
       - conditions:
           - condition: trigger
             id: start
+          # Only trigger if this satellite started the game
+          - condition: template
+            value_template: "{{ trigger.satellite_id == satellite_entity }}"
         sequence:
           - service: puzzle_game.start_game
             data:
@@ -136,6 +142,8 @@ action:
       - conditions:
           - condition: trigger
             id: bonus
+          - condition: template
+            value_template: "{{ trigger.satellite_id == satellite_entity }}"
         sequence:
           - service: puzzle_game.start_game
             data:
@@ -174,6 +182,8 @@ action:
       - conditions:
           - condition: trigger
             id: continue
+          - condition: template
+            value_template: "{{ trigger.satellite_id == satellite_entity }}"
         sequence:
           - choose:
               - conditions:
@@ -222,12 +232,8 @@ action:
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
-          # Check that this event is for the active satellite
           - condition: template
-            value_template: "{{ trigger.event.data.entity_id == state_attr('sensor.puzzle_game', 'active_satellite') }}"
-          # Check that it went from responding to idle
-          - condition: template
-            value_template: "{{ trigger.event.data.old_state.state == 'responding' and trigger.event.data.new_state.state == 'idle' }}"
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - delay:
               milliseconds: 500
@@ -246,6 +252,8 @@ action:
             id: answer
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.submit_answer
             data:
@@ -268,6 +276,8 @@ action:
             id: reveal
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.reveal_letter
           - delay:
@@ -288,6 +298,8 @@ action:
             id: skip
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.skip_word
           - delay:
@@ -308,6 +320,8 @@ action:
             id: repeat
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.repeat_clue
           - delay:
@@ -328,6 +342,8 @@ action:
             id: pause
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.set_session
             data:
@@ -348,6 +364,8 @@ action:
             id: giveup
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'session_active') == true }}"
+          - condition: template
+            value_template: "{{ state_attr('sensor.puzzle_game', 'active_satellite') == satellite_entity }}"
         sequence:
           - service: puzzle_game.set_session
             data:
