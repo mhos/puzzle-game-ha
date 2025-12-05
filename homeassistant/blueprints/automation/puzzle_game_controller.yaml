@@ -241,6 +241,8 @@ action:
           - service: assist_satellite.start_conversation
             target:
               entity_id: "{{ satellite_entity }}"
+            data:
+              start_message: " "
 
       #############################################
       # ANSWER ATTEMPT
