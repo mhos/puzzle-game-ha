@@ -43,10 +43,6 @@ trigger:
 
 variables:
   satellite_entity: !input satellite
-  # Derive device name from satellite entity (e.g., assist_satellite.vaca_lenovo_xxx -> vaca_lenovo_xxx)
-  device_name: "{{ satellite_entity.split('.')[1] }}"
-  # Build wake button entity ID from naming convention
-  wake_button: "button.{{ device_name }}_wake"
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
@@ -104,7 +100,7 @@ action:
               milliseconds: 500
           - service: button.press
             target:
-              entity_id: "{{ wake_button }}"
+              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
 
       #############################################
       # START BONUS GAME
@@ -154,7 +150,7 @@ action:
               milliseconds: 500
           - service: button.press
             target:
-              entity_id: "{{ wake_button }}"
+              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
 
       #############################################
       # CONTINUE/RESUME GAME
@@ -210,7 +206,7 @@ action:
               milliseconds: 500
           - service: button.press
             target:
-              entity_id: "{{ wake_button }}"
+              entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
 
       #############################################
       # PROCESS SPEECH (custom event from coordinator)
@@ -383,10 +379,10 @@ action:
                   - service: button.press
                     continue_on_error: true
                     target:
-                      entity_id: "{{ wake_button }}"
+                      entity_id: "button.{{ satellite_entity.split('.')[1] }}_wake"
                   - service: system_log.write
                     data:
-                      message: "Puzzle Game: Pressed wake button {{ wake_button }} to continue listening"
+                      message: "Puzzle Game: Pressed wake button to continue listening"
                       level: info
             default:
               # Game completed
