@@ -12,6 +12,12 @@ blueprint:
         entity:
           filter:
             - domain: assist_satellite
+    home_path:
+      name: Home Dashboard Path
+      description: "Path to navigate back to after game ends (e.g., /dashboard-viewassist). Leave empty to stay on game screen."
+      default: "/dashboard-viewassist"
+      selector:
+        text:
 
 mode: queued
 max: 5
@@ -43,6 +49,7 @@ trigger:
 
 variables:
   satellite_entity: !input satellite
+  home_dashboard_path: !input home_path
   view_assist_device: >-
     {% if trigger.platform == 'conversation' and trigger.device_id is defined %}
       {{ view_assist_entity(trigger.device_id) }}
@@ -417,6 +424,18 @@ action:
                       entity_id: "{{ view_assist_device }}"
                     data:
                       assist_prompt: ""
+                  # Return to home screen after a short delay
+                  - delay:
+                      seconds: 10
+                  - if:
+                      - condition: template
+                        value_template: "{{ home_dashboard_path | length > 0 }}"
+                    then:
+                      - service: view_assist.navigate
+                        continue_on_error: true
+                        data:
+                          device: "{{ view_assist_device }}"
+                          path: "{{ home_dashboard_path }}"
                   - stop: "Game ended"
 
               #############################################
@@ -476,10 +495,21 @@ action:
                       message: "Puzzle Game: Started conversation to continue listening"
                       level: info
             default:
-              # Game completed
+              # Game completed - clear assist prompt and return to home after delay
               - service: view_assist.set_state
                 continue_on_error: true
                 target:
                   entity_id: "{{ view_assist_device }}"
                 data:
                   assist_prompt: ""
+              - delay:
+                  seconds: 30
+              - if:
+                  - condition: template
+                    value_template: "{{ home_dashboard_path | length > 0 }}"
+                then:
+                  - service: view_assist.navigate
+                    continue_on_error: true
+                    data:
+                      device: "{{ view_assist_device }}"
+                      path: "{{ home_dashboard_path }}"
