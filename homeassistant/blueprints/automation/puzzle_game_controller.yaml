@@ -224,7 +224,7 @@ action:
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
         sequence:
           - variables:
-              spoken_text: "{{ trigger.event.data.new_state.state | lower | trim }}"
+              spoken_text: "{{ trigger.event.data.text | lower | trim }}"
 
           - choose:
               #############################################

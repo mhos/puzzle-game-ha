@@ -103,12 +103,13 @@ class PuzzleGameCoordinator:
             # Only fire event if there's actual speech content and it changed
             if new_value and len(new_value) > 0 and new_value != old_value:
                 # Fire custom event for the blueprint to catch
+                # Pass state values as simple strings for template access
                 self.hass.bus.async_fire("puzzle_game_speech", {
                     "entity_id": stt_sensor,
-                    "old_state": old_state,
-                    "new_state": new_state,
+                    "text": new_value,
+                    "old_text": old_value,
                 })
-                _LOGGER.debug("Fired puzzle_game_speech event: %s", new_value)
+                _LOGGER.info("Fired puzzle_game_speech event: %s", new_value)
 
         self._stt_unsub = async_track_state_change_event(
             self.hass, [stt_sensor], _stt_state_changed
