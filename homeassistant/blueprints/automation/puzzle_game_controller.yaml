@@ -224,6 +224,10 @@ action:
               # Clean up speech: lowercase, trim whitespace, remove trailing punctuation
               spoken_text: "{{ trigger.event.data.text | lower | trim | regex_replace('[.!?,]+$', '') | trim }}"
 
+          # Ignore if this looks like a game start/continue command (already handled by conversation trigger)
+          - condition: template
+            value_template: "{{ 'start puzzle' not in spoken_text and 'puzzle game' not in spoken_text and 'bonus game' not in spoken_text and 'continue puzzle' not in spoken_text and 'resume puzzle' not in spoken_text }}"
+
           - choose:
               #############################################
               # REVEAL LETTER
