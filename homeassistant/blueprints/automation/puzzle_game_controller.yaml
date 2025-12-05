@@ -206,7 +206,7 @@ action:
             target:
               entity_id: "{{ satellite_entity }}"
             data:
-              question: ""
+              question: "What's your answer?"
               preannounce: false
               answers:
                 - id: reveal
@@ -406,7 +406,7 @@ action:
                             event_data:
                               satellite: "{{ satellite_entity }}"
                               view_assist_device: "{{ view_assist_device }}"
-                              first_question: "{{ state_attr('sensor.puzzle_game', 'last_message').startswith('Correct') }}"
+                              first_question: "{{ (state_attr('sensor.puzzle_game', 'last_message') | default('', true)).startswith('Correct') }}"
                     default:
                       # Game completed
                       - service: view_assist.set_state
