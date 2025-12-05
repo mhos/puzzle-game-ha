@@ -357,22 +357,26 @@ class GameManager:
         if game["current_word_index"] not in game["skipped_words"]:
             game["skipped_words"].append(game["current_word_index"])
 
-        # Find next word
+        # Find next word - first try unskipped words, then cycle through skipped
         start_index = game["current_word_index"]
         next_index = (start_index + 1) % 5
         found_next = False
 
+        # First pass: look for words that haven't been skipped or solved
         for _ in range(5):
             if (next_index not in game["solved_words"] and
-                next_index not in game["skipped_words"] and
-                next_index != game["current_word_index"]):
+                next_index not in game["skipped_words"]):
                 game["current_word_index"] = next_index
                 found_next = True
                 break
             next_index = (next_index + 1) % 5
 
+        # Second pass: if all remaining words are skipped, cycle through them
         if not found_next and game["skipped_words"]:
-            game["current_word_index"] = game["skipped_words"][0]
+            # Find the next skipped word after current position
+            current_pos = game["skipped_words"].index(start_index) if start_index in game["skipped_words"] else -1
+            next_pos = (current_pos + 1) % len(game["skipped_words"])
+            game["current_word_index"] = game["skipped_words"][next_pos]
 
         clues = puzzle.get("clues", [])
         words = puzzle.get("words", [])

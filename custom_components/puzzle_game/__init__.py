@@ -24,6 +24,7 @@ from .const import (
     SERVICE_REVEAL_LETTER,
     SERVICE_SKIP_WORD,
     SERVICE_REPEAT_CLUE,
+    SERVICE_SPELL_WORD,
     SERVICE_GIVE_UP,
     SERVICE_SET_SESSION,
 )
@@ -247,6 +248,14 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
             "message": result["message"],
         }
 
+    async def handle_spell_word(call: ServiceCall) -> ServiceResponse:
+        """Handle spell word service."""
+        result = await coordinator.spell_word()
+        return {
+            "success": result["success"],
+            "message": result["message"],
+        }
+
     async def handle_give_up(call: ServiceCall) -> ServiceResponse:
         """Handle give up service."""
         result = await coordinator.give_up()
@@ -303,6 +312,13 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
         DOMAIN,
         SERVICE_REPEAT_CLUE,
         handle_repeat_clue,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SPELL_WORD,
+        handle_spell_word,
         supports_response=SupportsResponse.OPTIONAL,
     )
 

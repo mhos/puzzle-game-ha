@@ -399,6 +399,44 @@ class PuzzleGameCoordinator:
             "game_state": state_data
         }
 
+    async def spell_word(self) -> dict[str, Any]:
+        """Spell out the current word letter by letter."""
+        game = self.storage.get_current_game()
+        if not game:
+            return {
+                "success": False,
+                "message": "No active game.",
+                "game_state": None
+            }
+
+        puzzle = game.get("puzzle", {})
+        words = puzzle.get("words", [])
+        current_index = game.get("current_word_index", 0)
+
+        if current_index < len(words):
+            word = words[current_index]
+            # Spell it out with pauses: "C. A. T."
+            spelled = ". ".join(letter.upper() for letter in word) + "."
+            message = f"The word is spelled: {spelled}"
+        else:
+            message = "No word to spell."
+
+        game["last_message"] = message
+        await self.storage.update_game(game["id"], {"last_message": message})
+
+        state_data = self.game_manager.get_game_state_dict(game)
+        # Preserve session state
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
+        self._update_sensor(state_data)
+
+        return {
+            "success": True,
+            "message": message,
+            "game_state": state_data
+        }
+
     async def give_up(self) -> dict[str, Any]:
         """Give up and end the game."""
         game = self.storage.get_current_game()

@@ -1,6 +1,6 @@
 blueprint:
   name: Puzzle Game Controller
-  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game', 'Play bonus game', or 'Continue puzzle game'. During gameplay, speak naturally - just say your answers, or say 'reveal', 'skip', 'repeat', 'pause', or 'give up'."
+  description: "Voice-controlled word puzzle game for View Assist. Say 'Start puzzle game', 'Play bonus game', or 'Continue puzzle game'. During gameplay, speak naturally - just say your answers, or say 'reveal', 'skip', 'repeat', 'spell', 'pause', or 'give up'."
   domain: automation
   author: mhos
   source_url: https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml
@@ -290,6 +290,24 @@ action:
                       entity_id: "{{ satellite_entity }}"
                     data:
                       message: "{{ state_attr('sensor.puzzle_game', 'clue') }}"
+                      preannounce: false
+
+              #############################################
+              # SPELL WORD
+              #############################################
+              - conditions:
+                  - condition: template
+                    value_template: "{{ 'spell' in spoken_text }}"
+                sequence:
+                  - service: puzzle_game.spell_word
+                  - delay:
+                      milliseconds: 500
+                  - service: assist_satellite.announce
+                    continue_on_error: true
+                    target:
+                      entity_id: "{{ satellite_entity }}"
+                    data:
+                      message: "{{ state_attr('sensor.puzzle_game', 'last_message') }}"
                       preannounce: false
 
               #############################################

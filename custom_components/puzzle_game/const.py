@@ -20,6 +20,7 @@ SERVICE_SUBMIT_ANSWER = "submit_answer"
 SERVICE_REVEAL_LETTER = "reveal_letter"
 SERVICE_SKIP_WORD = "skip_word"
 SERVICE_REPEAT_CLUE = "repeat_clue"
+SERVICE_SPELL_WORD = "spell_word"
 SERVICE_GIVE_UP = "give_up"
 SERVICE_SET_SESSION = "set_session"
 
