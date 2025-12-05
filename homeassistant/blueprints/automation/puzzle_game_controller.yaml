@@ -13,7 +13,8 @@ blueprint:
           filter:
             - domain: assist_satellite
 
-mode: restart
+mode: queued
+max: 5
 
 trigger:
   # Game start commands
@@ -380,8 +381,13 @@ action:
                   - delay:
                       milliseconds: 500
                   - service: button.press
+                    continue_on_error: true
                     target:
                       entity_id: "{{ wake_button }}"
+                  - service: system_log.write
+                    data:
+                      message: "Puzzle Game: Pressed wake button {{ wake_button }} to continue listening"
+                      level: info
             default:
               # Game completed
               - service: view_assist.set_state
