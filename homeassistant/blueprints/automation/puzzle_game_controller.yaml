@@ -33,7 +33,7 @@ trigger:
       - "continue puzzle game"
       - "resume puzzle game"
       - "continue [the] [puzzle] game"
-    id: continue
+    id: "continue"
 
   # Game commands during play
   - platform: conversation
@@ -181,7 +181,7 @@ action:
       #############################################
       - conditions:
           - condition: trigger
-            id: continue
+            id: "continue"
           - condition: template
             value_template: "{{ trigger.satellite_id == satellite_entity }}"
         sequence:
