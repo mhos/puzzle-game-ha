@@ -318,6 +318,22 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
             "view_assist_device": view_assist_device,
         }
 
+    async def handle_listening_timeout(call: ServiceCall) -> ServiceResponse:
+        """Handle listening timeout service."""
+        result = await coordinator.handle_listening_timeout()
+        return {
+            "success": result["success"],
+            "should_retry": result["should_retry"],
+            "should_pause": result["should_pause"],
+            "message": result["message"],
+            "retry_count": result["retry_count"],
+        }
+
+    async def handle_reset_timeout(call: ServiceCall) -> ServiceResponse:
+        """Handle reset timeout retries service."""
+        await coordinator.reset_timeout_retries()
+        return {"success": True}
+
     # Register services with response support
     hass.services.async_register(
         DOMAIN,
@@ -398,5 +414,19 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
         SERVICE_SET_SESSION,
         handle_set_session,
         schema=SERVICE_SET_SESSION_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "listening_timeout",
+        handle_listening_timeout,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "reset_timeout",
+        handle_reset_timeout,
         supports_response=SupportsResponse.OPTIONAL,
     )

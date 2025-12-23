@@ -60,3 +60,11 @@ set_session:
       required: true
       selector:
         boolean:
+
+listening_timeout:
+  name: Listening Timeout
+  description: Handle when the satellite times out waiting for speech. Increments retry counter and returns message to announce.
+
+reset_timeout:
+  name: Reset Timeout
+  description: Reset the timeout retry counter. Called when user successfully speaks.

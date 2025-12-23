@@ -617,3 +617,74 @@ class PuzzleGameCoordinator:
             "message": result["message"],
             "game_state": state_data
         }
+
+    async def handle_listening_timeout(self) -> dict[str, Any]:
+        """Handle when the satellite times out waiting for speech.
+
+        Increments retry counter and returns appropriate message.
+        After 3 retries, recommends pausing the game.
+        """
+        game = self.storage.get_current_game()
+        if not game:
+            return {
+                "success": False,
+                "should_retry": False,
+                "should_pause": False,
+                "message": "No active game.",
+                "retry_count": 0
+            }
+
+        if not game.get("is_active"):
+            return {
+                "success": False,
+                "should_retry": False,
+                "should_pause": False,
+                "message": "Game is not active.",
+                "retry_count": 0
+            }
+
+        # Get and increment retry counter
+        retry_count = game.get("timeout_retries", 0) + 1
+        game["timeout_retries"] = retry_count
+        await self.storage.update_game(game["id"], {"timeout_retries": retry_count})
+
+        max_retries = 3
+
+        if retry_count >= max_retries:
+            # Too many retries - suggest pausing
+            message = "Are you still there? Say any answer to continue, or say pause to take a break."
+            should_pause = True
+        elif retry_count == 1:
+            message = f"Still thinking? {self.game_manager.get_current_clue(game)}"
+            should_pause = False
+        else:
+            message = f"Take your time. {self.game_manager.get_current_clue(game)}"
+            should_pause = False
+
+        game["last_message"] = message
+        await self.storage.update_game(game["id"], {"last_message": message})
+
+        state_data = self.game_manager.get_game_state_dict(game)
+        state_data["session_active"] = self._session_active
+        state_data["active_satellite"] = self._active_satellite
+        state_data["view_assist_device"] = self._view_assist_device
+        state_data["timeout_retries"] = retry_count
+        self._update_sensor(state_data)
+
+        _LOGGER.info("Listening timeout, retry %d of %d", retry_count, max_retries)
+
+        return {
+            "success": True,
+            "should_retry": retry_count < max_retries,
+            "should_pause": should_pause,
+            "message": message,
+            "retry_count": retry_count
+        }
+
+    async def reset_timeout_retries(self) -> None:
+        """Reset the timeout retry counter (called when user successfully speaks)."""
+        game = self.storage.get_current_game()
+        if game and game.get("timeout_retries", 0) > 0:
+            game["timeout_retries"] = 0
+            await self.storage.update_game(game["id"], {"timeout_retries": 0})
+            _LOGGER.debug("Reset timeout retry counter")

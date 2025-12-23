@@ -39,6 +39,17 @@ trigger:
     event_type: puzzle_game_speech
     id: stt_changed
 
+  # Listening timeout - fires when satellite is idle for 5+ seconds while session is active
+  - platform: template
+    value_template: >-
+      {% set sat = state_attr('sensor.puzzle_game', 'active_satellite') %}
+      {% set session = state_attr('sensor.puzzle_game', 'session_active') %}
+      {% set game_active = state_attr('sensor.puzzle_game', 'is_active') %}
+      {{ sat not in ['', None, 'unknown'] and session == true and game_active == true and is_state(sat, 'idle') }}
+    for:
+      seconds: 5
+    id: listening_timeout
+
 variables:
   # Auto-detect satellite from the triggering device
   satellite_entity: >-
@@ -269,6 +280,8 @@ action:
           - condition: template
             value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true }}"
         sequence:
+          # Reset timeout retry counter since user spoke
+          - service: puzzle_game.reset_timeout
           - variables:
               # Clean up speech: lowercase, trim whitespace, remove trailing punctuation
               spoken_text: "{{ trigger.event.data.text | lower | trim | regex_replace('[.!?,]+$', '') | trim }}"
@@ -517,3 +530,35 @@ action:
                     data:
                       device: "{{ view_assist_device }}"
                       path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0') }}"
+
+      #############################################
+      # LISTENING TIMEOUT - No response from user
+      #############################################
+      - conditions:
+          - condition: trigger
+            id: listening_timeout
+        sequence:
+          - service: puzzle_game.listening_timeout
+            response_variable: timeout_result
+          # Announce the reminder message
+          - service: assist_satellite.announce
+            continue_on_error: true
+            target:
+              entity_id: "{{ satellite_entity }}"
+            data:
+              message: "{{ timeout_result.message }}"
+              preannounce: false
+          # If we should keep retrying, start listening again
+          - if:
+              - condition: template
+                value_template: "{{ timeout_result.should_retry == true or timeout_result.should_pause == true }}"
+            then:
+              - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
+                timeout: "00:00:30"
+              - service: assist_satellite.start_conversation
+                continue_on_error: true
+                target:
+                  entity_id: "{{ satellite_entity }}"
+                data:
+                  start_message: ""
+                  extra_system_prompt: "You are in puzzle game mode. The user is playing a word puzzle game. Do NOT respond to their speech - just say OK or stay completely silent. The game automation will handle their answer. Do not try to help, answer questions, or have a conversation."
