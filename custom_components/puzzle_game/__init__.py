@@ -37,7 +37,7 @@ from .coordinator import PuzzleGameCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # Panel version - increment when frontend changes
-PANEL_VERSION = "1.0.7"
+PANEL_VERSION = "1.0.8"
 PANEL_URL = "puzzle-game"
 PANEL_TITLE = "Puzzle Game"
 PANEL_ICON = "mdi:owl"

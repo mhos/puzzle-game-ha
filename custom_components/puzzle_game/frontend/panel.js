@@ -473,11 +473,15 @@ class PuzzleGamePanel extends HTMLElement {
             <h3>Starting the Game</h3>
             <div class="help-command">
               <strong>"Start puzzle game"</strong>
-              <span>Begin a new puzzle with 5 words</span>
+              <span>Begin a new daily puzzle</span>
             </div>
             <div class="help-command">
               <strong>"Play bonus game"</strong>
-              <span>Start a bonus round</span>
+              <span>Start an unlimited bonus round</span>
+            </div>
+            <div class="help-command">
+              <strong>"Continue puzzle game"</strong>
+              <span>Resume a paused game</span>
             </div>
           </div>
 
@@ -489,34 +493,50 @@ class PuzzleGamePanel extends HTMLElement {
             </div>
             <div class="help-command">
               <strong>"Spell"</strong>
-              <span>Spell the word letter by letter</span>
+              <span>Enter spelling mode - say letters then "done"</span>
             </div>
             <div class="help-command">
-              <strong>"Reveal"</strong>
+              <strong>"Reveal" or "Hint"</strong>
               <span>Show one random letter</span>
             </div>
             <div class="help-command">
-              <strong>"Skip"</strong>
+              <strong>"Skip" or "Next"</strong>
               <span>Move to next word</span>
             </div>
             <div class="help-command">
-              <strong>"Repeat"</strong>
+              <strong>"Repeat" or "Clue"</strong>
               <span>Hear the current clue again</span>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3>Spelling Mode</h3>
+            <div class="help-command">
+              <strong>Say letters + "done"</strong>
+              <span>Example: "R E F L E C T S done"</span>
+            </div>
+            <div class="help-command">
+              <strong>"Cancel"</strong>
+              <span>Exit spelling mode</span>
             </div>
           </div>
 
           <div class="help-section">
             <h3>Ending the Game</h3>
             <div class="help-command">
-              <strong>"Pause" / "Give up"</strong>
-              <span>Pause or end the game</span>
+              <strong>"Pause" or "Stop"</strong>
+              <span>Pause the game (resume anytime)</span>
+            </div>
+            <div class="help-command">
+              <strong>"Give up"</strong>
+              <span>End the game and see answers</span>
             </div>
           </div>
 
           <div class="help-section">
             <h3>How to Play</h3>
             <div class="help-command">
-              <span>Solve 5 words, then guess the theme that connects them all. Each correct word earns 10 points. The final theme answer is worth 20 points!</span>
+              <span>Solve 5 words, then guess the theme that connects them all. Each correct word earns 10 points. The final theme answer is worth 20 points! Take your time - the game will prompt you if you need more time to think.</span>
             </div>
           </div>
         </div>

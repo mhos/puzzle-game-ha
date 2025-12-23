@@ -2,17 +2,20 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge&logo=homeassistant&logoColor=white)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mhos&repository=puzzle-game-ha&category=integration)
 
-A voice-controlled word puzzle game that runs **natively in Home Assistant**. Works with [View Assist](https://dinki.github.io/View-Assist/) for visual display. Solve themed word puzzles completely hands-free!
+A voice-controlled word puzzle game that runs **natively in Home Assistant**. Works with [View Assist](https://dinki.github.io/View-Assist/) for visual display, or voice-only on any assist satellite. Solve themed word puzzles completely hands-free!
 
 ## Features
 
 - **Native HA Integration** - Runs inside Home Assistant, no separate server needed
 - **Works Everywhere** - HAOS, Container, Core, Supervised - all installation types
 - **Any AI Provider** - Uses your configured HA conversation agent (OpenAI, Google AI, Ollama, etc.)
+- **Smart Device Detection** - Automatically detects if your device has a display
+- **Voice-Only Support** - Works on satellites without displays (voice-only gameplay)
 - **Daily Puzzles** - Fresh AI-generated puzzle every day
 - **Unlimited Bonus Rounds** - Play as many bonus games as you want
 - **Voice Control** - Completely hands-free gameplay
 - **Continuous Conversation** - No wake word needed during gameplay!
+- **Patient Gameplay** - Automatically prompts you if you need more time to think
 - **Auto-registering Panel** - Appears in sidebar automatically, no dashboard setup needed
 - **Persistent State** - Resume games anytime
 
@@ -33,7 +36,8 @@ Each puzzle consists of 5 themed words plus a final "connection" answer:
 
 - **Home Assistant 2024.1.0 or newer**
 - **A conversation agent configured** (OpenAI, Google AI, Ollama, or any HA-compatible AI)
-- **View Assist** (for visual dashboard and voice control)
+- **Assist Satellite** (for voice control)
+- **View Assist** (optional - for visual dashboard display)
 
 ### Step 1: Install via HACS
 
@@ -69,7 +73,7 @@ Click the button above, or manually:
 2. Click **Import Blueprint**
 3. Paste: `https://github.com/mhos/puzzle-game-ha/blob/main/homeassistant/blueprints/automation/puzzle_game_controller.yaml`
 4. Click **Preview** then **Import**
-5. Click **Create Automation** from the blueprint
+5. Click **Create Automation** from the blueprint (no configuration needed!)
 
 **That's it! You're ready to play!**
 
@@ -79,10 +83,12 @@ Click the button above, or manually:
 
 ### Starting a Game
 
-Say to your View Assist device:
+Say to any assist satellite:
 - **"Start puzzle game"** - Begin a new daily puzzle
 - **"Play bonus game"** - Start a bonus round
 - **"Continue puzzle game"** - Resume a paused game
+
+> **Smart Detection:** The game automatically detects if your device has a View Assist display. If it does, the game panel will be shown. If not, you can still play using voice only!
 
 ### During Gameplay (No Wake Word Needed!)
 
@@ -92,18 +98,25 @@ Once the game starts, speak directly without the wake word:
 |---------|--------|
 | Say the word directly | Submit your answer |
 | "Spell" | Enter spelling mode |
-| "Reveal" | Get a letter hint |
-| "Skip" | Skip current word |
-| "Repeat" | Hear the clue again |
-| "Pause" | Pause the game |
+| "Reveal" or "Hint" | Get a letter hint |
+| "Skip" or "Next" | Skip current word |
+| "Repeat" or "Clue" | Hear the clue again |
+| "Pause" or "Stop" | Pause the game |
 | "Give up" | End the game |
 
 ### Spelling Mode
 
 Say "spell" to enter spelling mode:
-1. Say each letter one at a time
-2. Say "done" when finished
-3. The system will submit your spelled word
+- Say letters one at a time, then say "done"
+- OR say all letters at once: "R E F L E C T S done"
+- Say "cancel" to exit spelling mode without submitting
+
+### Take Your Time
+
+The game is patient! If you don't respond right away:
+- After a few seconds: "Still thinking?" + repeats the clue
+- Continues prompting you up to 3 times
+- Say "pause" anytime to take a break
 
 ---
 
@@ -119,6 +132,13 @@ The integration provides these services:
 | `puzzle_game.skip_word` | Skip current word |
 | `puzzle_game.repeat_clue` | Repeat the clue |
 | `puzzle_game.give_up` | End the game |
+| `puzzle_game.start_spelling` | Enter spelling mode |
+| `puzzle_game.add_letter` | Add a letter while spelling |
+| `puzzle_game.finish_spelling` | Submit spelled word (optional `text` parameter for full phrase) |
+| `puzzle_game.cancel_spelling` | Cancel spelling mode |
+| `puzzle_game.set_session` | Set voice session state |
+| `puzzle_game.listening_timeout` | Handle listening timeout |
+| `puzzle_game.reset_timeout` | Reset timeout retry counter |
 
 ## Sensor
 
@@ -128,6 +148,8 @@ The integration provides these services:
 - Current clue and blanks
 - Solved words
 - Last feedback message
+- Session state (active satellite, View Assist device)
+- Timeout retry count
 
 ---
 
@@ -164,7 +186,12 @@ If AI fails, the game uses built-in fallback puzzles.
 
 ### Voice Commands Not Working
 - Verify the blueprint automation is enabled
-- Ensure View Assist is properly configured
+- Ensure your assist satellite is properly configured
+- Check Home Assistant logs for automation errors
+
+### Game Stops Unexpectedly
+- The game should now automatically prompt you if you don't respond
+- If it still stops, check if the automation is being triggered in the logs
 
 ---
 
