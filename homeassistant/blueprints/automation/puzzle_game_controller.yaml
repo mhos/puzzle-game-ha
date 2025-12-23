@@ -450,23 +450,6 @@ action:
                   - condition: template
                     value_template: "{{ state_attr('sensor.puzzle_game', 'is_active') == true and state_attr('sensor.puzzle_game', 'session_active') == true }}"
                 sequence:
-                  # If correct answer, announce next clue
-                  - choose:
-                      - conditions:
-                          - condition: template
-                            value_template: "{{ (state_attr('sensor.puzzle_game', 'last_message') | default('', true)).startswith('Correct') }}"
-                        sequence:
-                          - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
-                            timeout: "00:00:30"
-                          - delay:
-                              milliseconds: 500
-                          - service: assist_satellite.announce
-                            continue_on_error: true
-                            target:
-                              entity_id: "{{ satellite_entity }}"
-                            data:
-                              message: "{{ state_attr('sensor.puzzle_game', 'clue') }}"
-                              preannounce: false
                   # Wait for any announcement to finish, then listen again
                   - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
                     timeout: "00:00:30"
