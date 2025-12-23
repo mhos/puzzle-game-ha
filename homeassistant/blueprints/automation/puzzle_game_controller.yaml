@@ -318,6 +318,8 @@ action:
                     value_template: "{{ state_attr('sensor.puzzle_game', 'spelling_mode') == true and ('done' in spoken_text or 'submit' in spoken_text or 'finished' in spoken_text) }}"
                 sequence:
                   - service: puzzle_game.finish_spelling
+                    data:
+                      text: "{{ spoken_text }}"
                   - delay:
                       milliseconds: 500
                   - service: assist_satellite.announce

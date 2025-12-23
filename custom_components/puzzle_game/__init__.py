@@ -71,6 +71,12 @@ SERVICE_ADD_LETTER_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_FINISH_SPELLING_SCHEMA = vol.Schema(
+    {
+        vol.Optional("text"): cv.string,
+    }
+)
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Puzzle Game from a config entry."""
@@ -276,7 +282,8 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
 
     async def handle_finish_spelling(call: ServiceCall) -> ServiceResponse:
         """Handle finish spelling service."""
-        result = await coordinator.finish_spelling()
+        text = call.data.get("text")
+        result = await coordinator.finish_spelling(text=text)
         return {
             "success": result["success"],
             "message": result["message"],
@@ -368,6 +375,7 @@ async def _async_setup_services(hass: HomeAssistant, coordinator: PuzzleGameCoor
         DOMAIN,
         SERVICE_FINISH_SPELLING,
         handle_finish_spelling,
+        schema=SERVICE_FINISH_SPELLING_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
 

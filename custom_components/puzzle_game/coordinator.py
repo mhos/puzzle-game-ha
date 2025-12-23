@@ -482,8 +482,15 @@ class PuzzleGameCoordinator:
             "game_state": state_data
         }
 
-    async def finish_spelling(self) -> dict[str, Any]:
-        """Finish spelling mode and submit the spelled word as an answer."""
+    async def finish_spelling(self, text: str | None = None) -> dict[str, Any]:
+        """Finish spelling mode and submit the spelled word as an answer.
+
+        Args:
+            text: Optional spoken text to parse for letters. If provided,
+                  extracts all letters from the text and adds them to the buffer
+                  before submitting. This handles cases where the user says
+                  "R E F L E C T S done" in one utterance.
+        """
         game = self.storage.get_current_game()
         if not game:
             return {
@@ -499,8 +506,21 @@ class PuzzleGameCoordinator:
                 "game_state": None
             }
 
-        # Get the spelled word
-        buffer = game.get("spelling_buffer", [])
+        # Get the spelled word from buffer
+        buffer = list(game.get("spelling_buffer", []))
+
+        # If text provided, parse it for letters and add to buffer
+        if text:
+            # Remove common end words and extract letters
+            text_clean = text.upper()
+            for word in ["DONE", "SUBMIT", "FINISHED", "ENTER"]:
+                text_clean = text_clean.replace(word, "")
+            # Extract only letters (handles "R E F L E C T S" or "R, E, F, L...")
+            parsed_letters = [c for c in text_clean if c.isalpha()]
+            if parsed_letters:
+                buffer.extend(parsed_letters)
+                _LOGGER.debug("Parsed letters from text '%s': %s", text, parsed_letters)
+
         spelled_word = "".join(buffer)
 
         # Clear spelling mode

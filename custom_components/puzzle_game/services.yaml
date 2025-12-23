@@ -34,6 +34,18 @@ repeat_clue:
   name: Repeat Clue
   description: Get the current clue repeated.
 
+finish_spelling:
+  name: Finish Spelling
+  description: Finish spelling mode and submit the spelled word.
+  fields:
+    text:
+      name: Spoken Text
+      description: Optional spoken text to parse for letters (e.g., "R E F L E C T S done"). If provided, letters are extracted and added to the buffer before submitting.
+      required: false
+      example: "R E F L E C T S done"
+      selector:
+        text:
+
 give_up:
   name: Give Up
   description: End the game and reveal all answers.
