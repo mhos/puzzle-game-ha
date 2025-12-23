@@ -473,7 +473,7 @@ action:
                         continue_on_error: true
                         data:
                           device: "{{ view_assist_device }}"
-                          path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0') }}"
+                          path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0', true) }}"
                   - stop: "Game ended"
 
               #############################################
@@ -529,7 +529,7 @@ action:
                     continue_on_error: true
                     data:
                       device: "{{ view_assist_device }}"
-                      path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0') }}"
+                      path: "{{ state_attr(view_assist_device, 'home_view') | default('/lovelace/0', true) }}"
 
       #############################################
       # LISTENING TIMEOUT - No response from user
