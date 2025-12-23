@@ -104,17 +104,46 @@ def parse_puzzle_response(text: str) -> dict | None:
             if not line:
                 continue
 
-            if line.upper().startswith("THEME:"):
-                theme = line.split(":", 1)[1].strip().upper()
-            elif line.upper().startswith("WORD"):
+            # Remove markdown formatting like **THEME:** or *THEME:*
+            clean_line = re.sub(r'\*+', '', line).strip()
+
+            # Try to extract theme with various formats
+            if theme is None:
+                # Standard format: THEME: SOMETHING
+                if clean_line.upper().startswith("THEME:"):
+                    theme = clean_line.split(":", 1)[1].strip().upper()
+                # Alternative: "The theme is: SOMETHING" or "Theme is SOMETHING"
+                elif "THEME" in clean_line.upper() and ":" in clean_line:
+                    parts = clean_line.split(":", 1)
+                    if len(parts) > 1:
+                        theme = parts[1].strip().upper()
+                # Try regex for "THEME: WORD" or "THEME - WORD"
+                elif theme is None:
+                    theme_match = re.search(r'THEME[:\s\-]+([A-Z][A-Z\s]+)', clean_line.upper())
+                    if theme_match:
+                        theme = theme_match.group(1).strip()
+
+            # Extract words - be more flexible with format
+            if clean_line.upper().startswith("WORD"):
                 # Format: WORD1: HORSES | Animals you ride at a fair
-                parts = line.split(":", 1)
+                parts = clean_line.split(":", 1)
                 if len(parts) > 1:
                     word_clue = parts[1].strip()
                     if "|" in word_clue:
                         word, clue = word_clue.split("|", 1)
                         words.append(word.strip().upper())
                         clues.append(clue.strip())
+                    elif "-" in word_clue and len(word_clue.split("-", 1)) == 2:
+                        # Alternative format: WORD1: HORSES - Animals you ride
+                        word, clue = word_clue.split("-", 1)
+                        words.append(word.strip().upper())
+                        clues.append(clue.strip())
+
+        # Clean up theme - remove any trailing punctuation or extra spaces
+        if theme:
+            theme = re.sub(r'[^\w\s]', '', theme).strip()
+            # If theme has multiple words, keep them
+            theme = ' '.join(theme.split())
 
         # Validate we got everything
         if theme and len(words) == 5 and len(clues) == 5:
@@ -128,6 +157,8 @@ def parse_puzzle_response(text: str) -> dict | None:
                 "Incomplete puzzle: theme=%s, words=%d, clues=%d",
                 theme, len(words), len(clues)
             )
+            # Log the raw response for debugging
+            _LOGGER.debug("Raw AI response:\n%s", text[:500])
             return None
 
     except Exception as e:
