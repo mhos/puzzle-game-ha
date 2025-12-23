@@ -87,8 +87,6 @@ action:
                   message: "{{ start_result.message }}"
                   preannounce: false
               - stop: "Game start failed"
-          - delay:
-              seconds: 2
           # Only navigate if we have a display
           - if:
               - condition: template
@@ -111,8 +109,6 @@ action:
               active: true
               satellite: "{{ satellite_entity }}"
               view_assist_device: "{{ view_assist_device if has_display else '' }}"
-          - delay:
-              seconds: 1
           # Announce the first clue
           - service: assist_satellite.announce
             continue_on_error: true
@@ -124,8 +120,6 @@ action:
           # Wait for announcement to finish, then trigger listening
           - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
             timeout: "00:00:30"
-          - delay:
-              milliseconds: 500
           - service: assist_satellite.start_conversation
             target:
               entity_id: "{{ satellite_entity }}"
@@ -160,8 +154,6 @@ action:
                   message: "{{ start_result.message }}"
                   preannounce: false
               - stop: "Game start failed"
-          - delay:
-              seconds: 2
           # Only navigate if we have a display
           - if:
               - condition: template
@@ -184,8 +176,6 @@ action:
               active: true
               satellite: "{{ satellite_entity }}"
               view_assist_device: "{{ view_assist_device if has_display else '' }}"
-          - delay:
-              seconds: 1
           # Announce the first clue
           - service: assist_satellite.announce
             continue_on_error: true
@@ -197,8 +187,6 @@ action:
           # Wait for announcement to finish, then trigger listening
           - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
             timeout: "00:00:30"
-          - delay:
-              milliseconds: 500
           - service: assist_satellite.start_conversation
             target:
               entity_id: "{{ satellite_entity }}"
@@ -262,8 +250,6 @@ action:
           # Wait for announcement to finish, then trigger listening
           - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
             timeout: "00:00:30"
-          - delay:
-              milliseconds: 500
           - service: assist_satellite.start_conversation
             target:
               entity_id: "{{ satellite_entity }}"
@@ -300,8 +286,6 @@ action:
                     value_template: "{{ 'reveal' in spoken_text or 'hint' in spoken_text or spoken_text == 'letter' }}"
                 sequence:
                   - service: puzzle_game.reveal_letter
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -318,8 +302,6 @@ action:
                     value_template: "{{ 'skip' in spoken_text or 'pass' in spoken_text or 'next' in spoken_text }}"
                 sequence:
                   - service: puzzle_game.skip_word
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -336,8 +318,6 @@ action:
                     value_template: "{{ 'repeat' in spoken_text or 'clue' in spoken_text or 'say that again' in spoken_text }}"
                 sequence:
                   - service: puzzle_game.repeat_clue
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -354,8 +334,6 @@ action:
                     value_template: "{{ 'spell' in spoken_text and state_attr('sensor.puzzle_game', 'spelling_mode') != true }}"
                 sequence:
                   - service: puzzle_game.start_spelling
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -374,8 +352,6 @@ action:
                   - service: puzzle_game.finish_spelling
                     data:
                       text: "{{ spoken_text }}"
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -392,8 +368,6 @@ action:
                     value_template: "{{ state_attr('sensor.puzzle_game', 'spelling_mode') == true and ('cancel' in spoken_text or 'nevermind' in spoken_text or 'never mind' in spoken_text) }}"
                 sequence:
                   - service: puzzle_game.cancel_spelling
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -412,8 +386,6 @@ action:
                   - service: puzzle_game.add_letter
                     data:
                       letter: "{{ spoken_text }}"
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.announce
                     continue_on_error: true
                     target:
@@ -498,8 +470,6 @@ action:
               - service: puzzle_game.submit_answer
                 data:
                   answer: "{{ spoken_text }}"
-              - delay:
-                  milliseconds: 500
               - service: assist_satellite.announce
                 continue_on_error: true
                 target:
@@ -517,8 +487,6 @@ action:
                   # Wait for any announcement to finish, then listen again
                   - wait_template: "{{ is_state(satellite_entity, 'idle') }}"
                     timeout: "00:00:30"
-                  - delay:
-                      milliseconds: 500
                   - service: assist_satellite.start_conversation
                     continue_on_error: true
                     target:
