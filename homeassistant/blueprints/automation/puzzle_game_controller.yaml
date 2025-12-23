@@ -73,6 +73,20 @@ action:
           - service: puzzle_game.start_game
             data:
               bonus: false
+            response_variable: start_result
+          # Check if game start was successful
+          - if:
+              - condition: template
+                value_template: "{{ start_result.success != true }}"
+            then:
+              - service: assist_satellite.announce
+                continue_on_error: true
+                target:
+                  entity_id: "{{ satellite_entity }}"
+                data:
+                  message: "{{ start_result.message }}"
+                  preannounce: false
+              - stop: "Game start failed"
           - delay:
               seconds: 2
           # Only navigate if we have a display
@@ -132,6 +146,20 @@ action:
           - service: puzzle_game.start_game
             data:
               bonus: true
+            response_variable: start_result
+          # Check if game start was successful
+          - if:
+              - condition: template
+                value_template: "{{ start_result.success != true }}"
+            then:
+              - service: assist_satellite.announce
+                continue_on_error: true
+                target:
+                  entity_id: "{{ satellite_entity }}"
+                data:
+                  message: "{{ start_result.message }}"
+                  preannounce: false
+              - stop: "Game start failed"
           - delay:
               seconds: 2
           # Only navigate if we have a display
